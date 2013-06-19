@@ -95,7 +95,7 @@
           });
 
         videoElement.addEventListener('canplay', function (e) {
-          button1Element.disabled = false;
+          rollElement._appbuilder.sendOutput('isReady');
         }, false);
 
         function initButtonElement (buttonElement) {
@@ -155,6 +155,10 @@
             }
           },
           outputs: {
+            isReady: {
+              type: 'event',
+              description: 'is ready'
+            },
             pictureTaken: {
               type: 'image',
               description: 'takes a picture'
@@ -256,21 +260,25 @@
           }
         });
 
-        button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
-        button2Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'createGif');
-        button2Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'disable');
-        button2Element._appbuilder.connectOutput('click', button2Element._appbuilder, 'disable');
-        button2Element._appbuilder.connectOutput('click', button3Element._appbuilder, 'disable');
-        button3Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'clear');
-        button3Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'clearImage');
-        button3Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'enable');
-        rollElement._appbuilder.connectOutput('hasPictures', button2Element._appbuilder, 'enable');
-        rollElement._appbuilder.connectOutput('hasPictures', button3Element._appbuilder, 'enable');
-        rollElement._appbuilder.connectOutput('isEmpty', button2Element._appbuilder, 'disable');
-        rollElement._appbuilder.connectOutput('isEmpty', button3Element._appbuilder, 'disable');
-        shutterElement._appbuilder.connectOutput('pictureTaken', rollElement._appbuilder, 'insertPicture');
-        rollElement._appbuilder.connectOutput('gifCreated', shutterElement._appbuilder, 'showImage');
-        rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
+
+        if (window.location.search.indexOf('nographinit') === -1) {
+          button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
+          button2Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'createGif');
+          button2Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'disable');
+          button2Element._appbuilder.connectOutput('click', button2Element._appbuilder, 'disable');
+          button2Element._appbuilder.connectOutput('click', button3Element._appbuilder, 'disable');
+          button3Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'clear');
+          button3Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'clearImage');
+          button3Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'enable');
+          rollElement._appbuilder.connectOutput('hasPictures', button2Element._appbuilder, 'enable');
+          rollElement._appbuilder.connectOutput('hasPictures', button3Element._appbuilder, 'enable');
+          rollElement._appbuilder.connectOutput('isEmpty', button2Element._appbuilder, 'disable');
+          rollElement._appbuilder.connectOutput('isEmpty', button3Element._appbuilder, 'disable');
+          shutterElement._appbuilder.connectOutput('pictureTaken', rollElement._appbuilder, 'insertPicture');
+          rollElement._appbuilder.connectOutput('gifCreated', shutterElement._appbuilder, 'showImage');
+          rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
+          rollElement._appbuilder.connectOutput('isReady', button1Element._appbuilder, 'enable');
+        }
       });
     </script>
   </body>
