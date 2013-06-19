@@ -7,7 +7,6 @@ define([], function () {
     this.outputType = outputType;
 
     this.send = function (data) {
-      console.log(data);
       inputEndpoint.receive(inputType, data);
     };
   }

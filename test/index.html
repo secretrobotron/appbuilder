@@ -2,6 +2,7 @@
   <head>
     <script src="../lib/require.js"></script>
     <script src="test-config.js"></script>
+    <script src="lib/gif.js"></script>
     <style>
       #container {
         position: relative;
@@ -29,11 +30,21 @@
         width: 100%;
         height: 100%;
       }
-      #button {
-        display: block;
-        margin: 20px auto;
+      #shutter div[data-shutter-image-container] {
+        width: 100%;
+        height: 100%;
+      }
+      #shutter div[data-shutter-image-container] img {
+        width: 100%;
+      }
+      #buttons {
+        text-align: center;
+      }
+      button {
+        display: inline-block;
+        margin: 10px auto;
         height: 30px;
-        width: 200px;
+        width: 90px;
       }
       #roll {
         margin: 10px 10px;
@@ -47,14 +58,20 @@
   </head>
   <body>
     <div id="container">
-      <div id="shutter"><video></video></div>
-      <button id="button" disabled>Take Picture</button>
+      <div id="shutter"><video></video><div data-shutter-image-container="true"></div></div>
+      <div id="buttons">
+        <button id="button1" disabled>Take Picture</button>
+        <button id="button2" disabled>Create Gif</button>
+        <button id="button3" disabled>Clear</button>
+      </div>
       <div id="roll"></div>
     </div>
     <script>
       testRequireContext(['appbuilder'], function () {
         var shutterElement = document.querySelector('#shutter');
-        var buttonElement = document.querySelector('#button');
+        var button1Element = document.querySelector('#button1');
+        var button2Element = document.querySelector('#button2');
+        var button3Element = document.querySelector('#button3');
         var videoElement = shutterElement.querySelector('video');
         var rollElement = document.querySelector('#roll');
 
@@ -78,14 +95,63 @@
           });
 
         videoElement.addEventListener('canplay', function (e) {
-          buttonElement.disabled = false;
+          button1Element.disabled = false;
         }, false);
+
+        function initButtonElement (buttonElement) {
+          appbuilder.initElement(buttonElement, {
+            inputs: {
+              click: {
+                type: 'event',
+                description: 'trigger the button'
+              },
+              enable: {
+                type: 'event',
+                description: 'enable the button'
+              },
+              disable: {
+                type: 'event',
+                description: 'disable the button'
+              }
+            },
+            outputs: {
+              click: {
+                type: 'event',
+                description: 'is clicked'
+              }
+            }
+          });
+        
+          buttonElement._appbuilder.onInput('enable', function () {
+            buttonElement.disabled = false;
+          });
+
+          buttonElement._appbuilder.onInput('disable', function () {
+            buttonElement.disabled = true;
+          });
+
+          buttonElement.addEventListener('click', function (e) {
+            buttonElement._appbuilder.sendOutput('click');
+          }, false);
+        }
+
+        initButtonElement(button1Element);
+        initButtonElement(button2Element);
+        initButtonElement(button3Element);
 
         appbuilder.initElement(shutterElement, {
           inputs: {
             takePicture: {
               type: 'event',
               description: 'take a picture'
+            },
+            showImage: {
+              type: 'image',
+              description: 'display an image'
+            },
+            clearImage: {
+              type: 'image',
+              description: 'clear an image if one is being displayed'
             }
           },
           outputs: {
@@ -96,36 +162,36 @@
           }
         });
 
-        appbuilder.initElement(buttonElement, {
-          inputs: {
-            click: {
-              type: 'event',
-              description: 'trigger the button'
-            }
-          },
-          outputs: {
-            click: {
-              type: 'event',
-              description: 'is clicked'
-            }
-          }
-        });
-
         appbuilder.initElement(rollElement, {
           inputs: {
             insertPicture: {
               type: 'image',
               description: 'store a picture in the roll'
+            },
+            createGif: {
+              type: 'event',
+              description: 'create a GIF from the roll'
+            },
+            clear: {
+              type: 'event',
+              description: 'clear the roll'
             }
           },
           outputs: {
-
+            gifCreated: {
+              type: 'image',
+              description: 'a GIF was created'
+            },
+            hasPictures: {
+              type: 'event',
+              description: 'contains pictures'
+            },
+            isEmpty: {
+              type: 'event',
+              description: 'is empty'
+            }
           }
         });
-
-        buttonElement.addEventListener('click', function (e) {
-          buttonElement._appbuilder.sendOutput('click');
-        }, false);
 
         shutterElement._appbuilder.onInput('takePicture', function(data) {
           var canvas = document.createElement('canvas');
@@ -141,10 +207,70 @@
           } else {
             rollElement.appendChild(canvas);
           }
+
+          var canvasElements = rollElement.querySelectorAll('canvas');
+          if (canvasElements.length > 0) {
+            rollElement._appbuilder.sendOutput('hasPictures', canvasElements);
+          }
         });
 
-        buttonElement._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
+        rollElement._appbuilder.onInput('createGif', function () {
+          var gif = new GIF({
+            workers: 2,
+            workerScript: 'lib/gif.worker.js',
+            quality: 10
+          });
+
+          var canvasElements = Array.prototype.slice.call(rollElement.querySelectorAll('canvas')).reverse();
+          canvasElements.forEach(function (canvas) {
+            gif.addFrame(canvas, {delay: 100});
+          });
+
+          gif.on('finished', function(blob) {
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(blob);
+            rollElement._appbuilder.sendOutput('gifCreated', img);
+          });
+
+          gif.render();          
+        });
+
+        rollElement._appbuilder.onInput('clear', function () {
+          while(rollElement.firstChild) {
+            rollElement.removeChild(rollElement.firstChild);
+          }
+          rollElement._appbuilder.sendOutput('isEmpty');
+        });
+
+        shutterElement._appbuilder.onInput('showImage', function (img) {
+          videoElement.hidden = true;
+          var shutterImageContainer = shutterElement.querySelector('div[data-shutter-image-container]');
+          shutterImageContainer.appendChild(img);
+        });
+
+        shutterElement._appbuilder.onInput('clearImage', function (img) {
+          videoElement.hidden = false;
+          var shutterImageContainer = shutterElement.querySelector('div[data-shutter-image-container]');
+          while(shutterImageContainer.firstChild) {
+            shutterImageContainer.removeChild(shutterImageContainer.firstChild);
+          }
+        });
+
+        button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
+        button2Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'createGif');
+        button2Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'disable');
+        button2Element._appbuilder.connectOutput('click', button2Element._appbuilder, 'disable');
+        button2Element._appbuilder.connectOutput('click', button3Element._appbuilder, 'disable');
+        button3Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'clear');
+        button3Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'clearImage');
+        button3Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'enable');
+        rollElement._appbuilder.connectOutput('hasPictures', button2Element._appbuilder, 'enable');
+        rollElement._appbuilder.connectOutput('hasPictures', button3Element._appbuilder, 'enable');
+        rollElement._appbuilder.connectOutput('isEmpty', button2Element._appbuilder, 'disable');
+        rollElement._appbuilder.connectOutput('isEmpty', button3Element._appbuilder, 'disable');
         shutterElement._appbuilder.connectOutput('pictureTaken', rollElement._appbuilder, 'insertPicture');
+        rollElement._appbuilder.connectOutput('gifCreated', shutterElement._appbuilder, 'showImage');
+        rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
       });
     </script>
   </body>
