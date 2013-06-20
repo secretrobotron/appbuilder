@@ -1,0 +1,14 @@
+.webmaker-appbuilder-connection-sentence-panel {
+  visibility: hidden;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  background-color: rgba(30, 30, 30, 0.85);
+  color: #fff;
+  padding: 5px;
+}
+
+.webmaker-appbuilder-connection-sentence-panel.on {
+  visibility: visible;
+}

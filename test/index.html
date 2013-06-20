@@ -4,6 +4,18 @@
     <script src="test-config.js"></script>
     <script src="lib/gif.js"></script>
     <style>
+      html, body {
+        padding: 0;
+        margin: 0;
+      }
+      .no-user-select {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
+      .disabled {
+        color: #ccc;
+      }
       #container {
         position: relative;
         border: 1px solid #000;
@@ -57,14 +69,14 @@
     </style>
   </head>
   <body>
-    <div id="container">
-      <div id="shutter"><video></video><div data-shutter-image-container="true"></div></div>
+    <div id="container" class="no-user-select">
+      <div id="shutter" name="Lense"><video></video><div data-shutter-image-container="true"></div></div>
       <div id="buttons">
-        <button id="button1" disabled>Take Picture</button>
-        <button id="button2" disabled>Create Gif</button>
-        <button id="button3" disabled>Clear</button>
+        <button id="button1" name="Shutter Button" class="disabled">Take Picture</button>
+        <button id="button2" name="Gif Button" class="disabled">Create Gif</button>
+        <button id="button3" name="Clear Button" class="disabled">Clear</button>
       </div>
-      <div id="roll"></div>
+      <div id="roll" name="Image Library"></div>
     </div>
     <script>
       testRequireContext(['appbuilder'], function () {
@@ -88,7 +100,7 @@
               var vendorURL = window.URL || window.webkitURL;
               videoElement.src = vendorURL.createObjectURL(stream);
             }
-            videoElement.play();            
+            videoElement.play();
           },
           function (err) {
             console.err('Couldn\'t prepare camera.');
@@ -103,35 +115,53 @@
             inputs: {
               click: {
                 type: 'event',
-                description: 'trigger the button'
+                description: 'trigger {{name}}'
               },
               enable: {
                 type: 'event',
-                description: 'enable the button'
+                description: 'enable {{name}}'
               },
               disable: {
                 type: 'event',
-                description: 'disable the button'
+                description: 'disable {{name}}'
               }
             },
             outputs: {
               click: {
                 type: 'event',
-                description: 'is clicked'
+                description: '{{name}} is clicked'
               }
             }
           });
         
+          var disabled = true;
+
           buttonElement._appbuilder.onInput('enable', function () {
-            buttonElement.disabled = false;
+            disabled = false;
+            buttonElement.classList.remove('disabled');
           });
 
           buttonElement._appbuilder.onInput('disable', function () {
-            buttonElement.disabled = true;
+            disabled = true;
+            buttonElement.classList.add('disabled');
           });
 
+          buttonElement.addEventListener('mousedown', function (e) {
+            if (disabled) {
+              e.stopPropagation();
+              e.preventDefault();
+              return false;
+            }
+          }, false);
+
           buttonElement.addEventListener('click', function (e) {
-            buttonElement._appbuilder.sendOutput('click');
+            if (!disabled) {
+              buttonElement._appbuilder.sendOutput('click');
+            }
+            else {
+              e.preventDefault();
+              return false;
+            }
           }, false);
         }
 
@@ -157,11 +187,11 @@
           outputs: {
             isReady: {
               type: 'event',
-              description: 'is ready'
+              description: '{{name}} is ready'
             },
             pictureTaken: {
               type: 'image',
-              description: 'takes a picture'
+              description: '{{name}} takes a picture'
             }
           }
         });
@@ -259,7 +289,6 @@
             shutterImageContainer.removeChild(shutterImageContainer.firstChild);
           }
         });
-
 
         if (window.location.search.indexOf('nographinit') === -1) {
           button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');

@@ -1,0 +1,25 @@
+.webmaker-appbuilder-overlay {
+  position: absolute;
+  z-index: 9999;
+  background: rgba(60, 150, 250, 0.7);
+  opacity: 0;
+}
+
+.webmaker-appbuilder-overlay.on {
+  opacity: 1;
+}
+
+.webmaker-appbuilder-line {
+  -webkit-transform-origin: 5px 5px;
+     -moz-transform-origin: 5px 5px;
+      -ms-transform-origin: 5px 5px;
+       -o-transform-origin: 5px 5px;
+          transform-origin: 5px 5px;
+  position: absolute;
+  z-index: 9999;
+  border: 5px solid rgba(60, 250, 150, 0.8);
+  pointer-events: none;
+  margin-top: -2.5px;
+  margin-left: -2.5px;
+  border-radius: 5px;
+}
