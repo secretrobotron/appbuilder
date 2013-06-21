@@ -3,4 +3,4 @@
 	url = https://github.com/jnordberg/gif.js.git
 [submodule "external/polymer"]
 	path = external/polymer
-	url = git://github.com/Polymer/polymer-all.git
+	url = https://github.com/Polymer/polymer-all.git
