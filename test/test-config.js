@@ -1,3 +1,4 @@
 var testRequireContext = require.config({
-  baseUrl: '../src'
+  baseUrl: '../src',
+  context: 'appbuilder-test'
 });

@@ -4,12 +4,80 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   ui_util.attachCSSFromString(appbuilder_css);
   var __rootHTML = ui_util.getDomFragmentFromString(appbuilder_html);
 
-  var __sentencePanelElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-sentence-panel').cloneNode(true);
+  var __sentencePanelElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-sentence').cloneNode(true);
   document.body.appendChild(__sentencePanelElement);
+
+  var __connectionListElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-list').cloneNode(true);
+  var __connectionListDetailElement = __connectionListElement.querySelector('.connection-details');
+  document.body.appendChild(__connectionListElement);
+  __connectionListDetailElement.parentNode.removeChild(__connectionListDetailElement);
 
   var __currentSentenceController;
 
-  function createConnectionSentence (outputElement, inputElement, onAccept, onCancel) {
+  function showConnectionList (element, onAccept, onCancel) {
+    var acceptButton = __connectionListElement.querySelector('button[data-action="accept"]');
+    var cancelButton = __connectionListElement.querySelector('button[data-action="cancel"]');
+
+    var outputDefinition = element._appbuilder.definition.outputs;
+    var connectionListElement = __connectionListElement.querySelector('ul');
+
+    var connections = element._appbuilder.connections.getOutputConnections();
+
+    connectionListElement.innerHTML = '';
+
+    var connectionList = [];
+
+    Object.keys(connections).forEach(function (outputKey) {
+      connections[outputKey].forEach(function (connection) {
+        var inputString = connection.inputEndpoint._parent.definition.inputs[connection.inputType].description;
+        var outputString = outputDefinition[outputKey].description;
+
+        inputString = inputString.replace('{{name}}', 'the ' + element._appbuilder.name);
+        outputString = outputString.replace('{{name}}', 'the ' + connection.inputEndpoint._parent.name);
+
+        var itemElement = __connectionListDetailElement.cloneNode(true);
+        itemElement.querySelector('*[data-description]').innerHTML = 'When ' + outputString + ', ' + inputString;
+
+        itemElement.querySelector('input[type="checkbox"]')._connection = connection;
+
+        connectionListElement.appendChild(itemElement);
+        connectionList.push(connection);
+      });
+    });
+
+    function onAcceptButtonClick (e) {
+      var uncheckedListItems = Array.prototype.slice.call(connectionListElement.querySelectorAll('input[type="checkbox"]')).filter(function (input) {
+          return !input.checked;
+        }).map(function (input) {
+          return input._connection;
+        });
+      controller.clear();
+      onAccept && onAccept(uncheckedListItems);
+    }
+
+    function onCancelButtonClick (e) {
+      controller.clear();
+      onCancel && onCancel();
+    }
+
+    if (connectionList.length > 0) {
+      __connectionListElement.classList.add('on');  
+      acceptButton.addEventListener('click', onAcceptButtonClick, false);
+      cancelButton.addEventListener('click', onCancelButtonClick, false);
+    }
+
+    var controller = {
+      clear: function () {
+        acceptButton.removeEventListener('click', onAcceptButtonClick, false);
+        cancelButton.removeEventListener('click', onCancelButtonClick, false);
+        __connectionListElement.classList.remove('on');
+      }
+    };
+
+    return controller;
+  }
+
+  function openConnectionSentencePanel (outputElement, inputElement, onAccept, onCancel) {
     var outputObject = outputElement._appbuilder;
     var inputObject = inputElement._appbuilder;
     var outputSelectElement = __sentencePanelElement.querySelector('*[data-output-action]')
@@ -90,6 +158,15 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     createElementOverlays: function () {
       graph_ui_module.createOverlays();
     },
+    updateStateListenersOnConnect: function (controller) {
+      controller.events.on('connect', function (e) {
+        Object.keys(controller.states).forEach(function (type) {
+          if (e.detail.type === type && controller.states[type]) {
+            e.detail.connection.send();
+          }
+        });
+      });
+    },
     initElement: function (element, definition) {
       definition = definition || element._appbuilder;
       if (!definition) {
@@ -98,12 +175,14 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
       var controller = element._appbuilder = {};
       controller.events = events_module.createEventManager();
-      controller.connections = connections_module.createEndpoint(element, function (type, data) {
+      controller.connections = connections_module.createEndpoint(controller, function (type, data) {
         controller.events.dispatch('receive:' + type, data);
       });
 
-      controller.name = element.name || element.getAttribute('name') || element.tagName;
+      controller.name = element.name || element.getAttribute('name') || element.id || element.tagName;
       controller.definition = definition;
+
+      controller.states = definition.states || {};
 
       controller.onInput = function (type, handler) {
         controller.events.on('receive:' + type, function (e) {
@@ -122,16 +201,26 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
         var connection = connections_module.createConnection(controller.connections, outputType, otherObject.connections, inputType);
         controller.connections.addOutputConnection(connection);
         otherObject.connections.addInputConnection(connection);
-        controller.events.dispatch('connect', otherObject);
+        controller.events.dispatch('connect', {
+          to: otherObject,
+          type: outputType,
+          connection: connection
+        });
       };
 
-      controller.disconnectOutput = function (outputType, otherObject, inputType) {
+      controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
         var connection = controller.connections.getOutputConection(outputType, from, inputType);
         if (connection) {
           controller.removeOutputConnection(connection);
           otherObject.connections.removeInputConnection(connection);
         }
         controller.events.dispatch('disconnect', otherObject);
+      };
+
+      controller.disconnectOutput = function (connection) {
+        controller.connections.removeOutputConnection(connection);
+        connection.inputEndpoint.removeInputConnection(connection);
+        console.log(controller.connections.getOutputConnections());
       };
 
       graph_ui_module.addElement(element);
@@ -143,10 +232,6 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
         var timeout = -1;
         var mouseX = e.clientX, mouseY = e.clientY;
-        function onMouseMove (e) {
-          mouseX = e.clientX;
-          mouseY = e.clientY;
-        }
 
         function onMouseUpBeforeTimeout (e) {
           window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
@@ -156,39 +241,54 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
         function onMouseUpAfterTimeout (e) {
           window.removeEventListener('mouseup', onMouseUpAfterTimeout, false);
-          window.removeEventListener('mousemove', onMouseMove, false);
           element.addEventListener('mousedown', onMouseDown, false);
           var connectionElement = graph_ui_module.stopDrawingPath();
           graph_ui_module.destroyOverlays();
           if (connectionElement) {
-            createConnectionSentence(element, connectionElement,
-              function (outputType, inputType) {
-                console.log(outputType, inputType);
-                element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
-                graph_ui_module.destroyOverlays();
-              },
-              function () {
-                graph_ui_module.destroyOverlays();
+            if (connectionElement !== element) {
+              openConnectionSentencePanel(element, connectionElement,
+                function (outputType, inputType) {
+                  element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
+                  graph_ui_module.destroyOverlays();
+                },
+                function () {
+                  graph_ui_module.destroyOverlays();
+                });
+            }
+            else {
+              showConnectionList(element, function (connectionsToDestroy) {
+                connectionsToDestroy.forEach(function (connection) {
+                  controller.disconnectOutput(connection);
+                });
               });
+            }
           }
         }
 
         timeout = setTimeout(function () {
           window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
           window.addEventListener('mouseup', onMouseUpAfterTimeout, false);
+          graph_ui_module.createOverlays();
           graph_ui_module.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
-          window.removeEventListener('mousemove', onMouseMove, false);
           timeout = -1;
-          graph_ui_module.createOverlays(element);
         }, 500);
 
         window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
-        window.addEventListener('mousemove', onMouseMove, false);
         element.removeEventListener('mousedown', onMouseDown, false);
       }
 
       element.addEventListener('mousedown', onMouseDown, false);
+
+      return controller;
     }
   };
+
+  setTimeout(function () {
+    var customEvent = document.createEvent('CustomEvent');
+    customEvent.initCustomEvent('appbuilderloaded', false, false, appbuilder);
+    window.dispatchEvent(customEvent);
+  }, 10);
+
+  return appbuilder;
 
 });

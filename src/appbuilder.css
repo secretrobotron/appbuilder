@@ -1,4 +1,4 @@
-.webmaker-appbuilder-connection-sentence-panel {
+.webmaker-appbuilder-connection-sentence {
   visibility: hidden;
   position: fixed;
   bottom: 0;
@@ -9,6 +9,25 @@
   padding: 5px;
 }
 
-.webmaker-appbuilder-connection-sentence-panel.on {
+.webmaker-appbuilder-connection-sentence.on {
   visibility: visible;
+}
+
+.webmaker-appbuilder-connection-list {
+  visibility: hidden;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  background-color: rgba(30, 30, 30, 0.85);
+  color: #fff;
+  padding: 5px;
+}
+
+.webmaker-appbuilder-connection-list.on {
+  visibility: visible;
+}
+
+.webmaker-appbuilder-connection-list ul {
+  list-style: none;
 }

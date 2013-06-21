@@ -1,9 +1,10 @@
 <html>
   <head>
-    <script src="../lib/require.js"></script>
-    <script src="test-config.js"></script>
+    <script src="../external/polymer/platform/platform.min.js"></script>
+    <script src="../lib/require.min.js" data-main="../src/appbuilder"></script>
     <script src="lib/gif.js"></script>
-    <script src="../lib/polymer.min.js"></script>
+    <link rel="import" href="components/shutter.html">
+    <link rel="import" href="components/button.html">
     <style>
       html, body {
         padding: 0;
@@ -13,9 +14,6 @@
         -moz-user-select: none;
         -webkit-user-select: none;
         -ms-user-select: none;
-      }
-      .disabled {
-        color: #ccc;
       }
       #container {
         position: relative;
@@ -33,31 +31,8 @@
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4c4c4c', endColorstr='#131313',GradientType=0 ); /* IE6-9 */
         overflow-y: scroll;
       }
-      #shutter {
-        margin: 0 auto;
-        width: 250px;
-        height: 200px;
-        background-color: rgba(100, 100, 100, 0.5);
-      }
-      #shutter video {
-        width: 100%;
-        height: 100%;
-      }
-      #shutter div[data-shutter-image-container] {
-        width: 100%;
-        height: 100%;
-      }
-      #shutter div[data-shutter-image-container] img {
-        width: 100%;
-      }
       #buttons {
         text-align: center;
-      }
-      button {
-        display: inline-block;
-        margin: 10px auto;
-        height: 30px;
-        width: 90px;
       }
       #roll {
         margin: 10px auto;
@@ -76,122 +51,22 @@
   </head>
   <body>
     <div id="container" class="no-user-select">
-      <div id="shutter" name="Lense"><video></video><div data-shutter-image-container="true"></div></div>
+      <appbuilder-shutter id="shutter"></appbuilder-shutter>
       <div id="buttons">
-        <button id="button1" name="Shutter Button" class="disabled">Take Picture</button>
-        <button id="button2" name="Gif Button" class="disabled">Create Gif</button>
-        <button id="button3" name="Clear Button" class="disabled">Clear</button>
+        <appbuilder-button id="button1" name="Shutter Button" class="disabled">Take Picture</appbuilder-button>
+        <appbuilder-button id="button2" name="Gif Button" class="disabled">Create Gif</appbuilder-button>
+        <appbuilder-button id="button3" name="Clear Button" class="disabled">Clear</appbuilder-button>
       </div>
       <div id="roll" name="Image Library"></div>
     </div>
     <script>
-      testRequireContext(['appbuilder'], function () {
-        var shutterElement = document.querySelector('#shutter');
-        var button1Element = document.querySelector('#button1');
-        var button2Element = document.querySelector('#button2');
-        var button3Element = document.querySelector('#button3');
-        var videoElement = shutterElement.querySelector('video');
+      window.addEventListener('appbuilderloaded', function (e) {
         var rollElement = document.querySelector('#roll');
-
-        var __getUserMedia = navigator.getUserMedia ||
-                             navigator.webkitGetUserMedia ||
-                             navigator.mozGetUserMedia ||
-                             navigator.msGetUserMedia;
-
-        __getUserMedia.call(navigator, {video: true, audio: false},
-          function (stream) {
-            if (navigator.mozGetUserMedia) {
-              videoElement.mozSrcObject = stream;
-            } else {
-              var vendorURL = window.URL || window.webkitURL;
-              videoElement.src = vendorURL.createObjectURL(stream);
-            }
-            videoElement.play();
-          },
-          function (err) {
-            console.err('Couldn\'t prepare camera.');
-          });
-
-        videoElement.addEventListener('canplay', function (e) {
-          shutterElement._appbuilder.sendOutput('isReady');
-        }, false);
-
-        function initButtonElement (buttonElement) {
-          appbuilder.initElement(buttonElement, {
-            inputs: {
-              click: {
-                type: 'event',
-                description: 'trigger {{name}}'
-              },
-              enable: {
-                type: 'event',
-                description: 'enable {{name}}'
-              },
-              disable: {
-                type: 'event',
-                description: 'disable {{name}}'
-              }
-            },
-            outputs: {
-              click: {
-                type: 'event',
-                description: '{{name}} is clicked'
-              }
-            }
-          });
-        
-          var disabled = true;
-
-          buttonElement._appbuilder.onInput('enable', function () {
-            console.log('enable!!');
-            disabled = false;
-            buttonElement.classList.remove('disabled');
-          });
-
-          buttonElement._appbuilder.onInput('disable', function () {
-            disabled = true;
-            buttonElement.classList.add('disabled');
-          });
-
-          buttonElement.addEventListener('click', function (e) {
-            if (!disabled) {
-              buttonElement._appbuilder.sendOutput('click');
-            }
-          }, false);
-        }
-
-        initButtonElement(button1Element);
-        initButtonElement(button2Element);
-        initButtonElement(button3Element);
-
-        appbuilder.initElement(shutterElement, {
-          inputs: {
-            takePicture: {
-              type: 'event',
-              description: 'take a picture'
-            },
-            showImage: {
-              type: 'image',
-              description: 'display an image'
-            },
-            clearImage: {
-              type: 'image',
-              description: 'clear an image if one is being displayed'
-            }
-          },
-          outputs: {
-            isReady: {
-              type: 'event',
-              description: '{{name}} is ready'
-            },
-            pictureTaken: {
-              type: 'image',
-              description: '{{name}} takes a picture'
-            }
-          }
-        });
-
         appbuilder.initElement(rollElement, {
+          states: {
+            isEmpty: true,
+            hasPictures: false
+          },
           inputs: {
             insertPicture: {
               type: 'image',
@@ -222,18 +97,6 @@
           }
         });
 
-        shutterElement._appbuilder.events.on('connect', function (e) {
-          console.log(e);
-        });
-
-        shutterElement._appbuilder.onInput('takePicture', function(data) {
-          var canvas = document.createElement('canvas');
-          canvas.width = videoElement.videoWidth;
-          canvas.height = videoElement.videoHeight;
-          canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          shutterElement._appbuilder.sendOutput('pictureTaken', canvas);
-        });
-
         rollElement._appbuilder.onInput('insertPicture', function(canvas) {
           if (rollElement.firstChild) {
             rollElement.insertBefore(canvas, rollElement.firstChild);
@@ -244,6 +107,8 @@
           var canvasElements = rollElement.querySelectorAll('canvas');
           if (canvasElements.length > 0) {
             rollElement._appbuilder.sendOutput('hasPictures', canvasElements);
+            rollElement._appbuilder.states['isEmpty'] = false;
+            rollElement._appbuilder.states['hasPictures'] = true;
           }
         });
 
@@ -273,23 +138,13 @@
             rollElement.removeChild(rollElement.firstChild);
           }
           rollElement._appbuilder.sendOutput('isEmpty');
+          rollElement._appbuilder.states['isEmpty'] = true;
+          rollElement._appbuilder.states['hasPictures'] = false;
         });
 
-        shutterElement._appbuilder.onInput('showImage', function (img) {
-          videoElement.hidden = true;
-          var shutterImageContainer = shutterElement.querySelector('div[data-shutter-image-container]');
-          shutterImageContainer.appendChild(img);
-        });
+        appbuilder.updateStateListenersOnConnect(rollElement._appbuilder);
 
-        shutterElement._appbuilder.onInput('clearImage', function (img) {
-          videoElement.hidden = false;
-          var shutterImageContainer = shutterElement.querySelector('div[data-shutter-image-container]');
-          while(shutterImageContainer.firstChild) {
-            shutterImageContainer.removeChild(shutterImageContainer.firstChild);
-          }
-        });
-
-        if (window.location.search.indexOf('nographinit') === -1) {
+        if (window.location.search.indexOf('graphinit') > -1) {
           button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
           button2Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'createGif');
           button2Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'disable');
@@ -307,7 +162,7 @@
           rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
           shutterElement._appbuilder.connectOutput('isReady', button1Element._appbuilder, 'enable');
         }
-      });
+      }, false);
     </script>
   </body>
 </html>

@@ -11,10 +11,17 @@ define([], function () {
     };
   }
   
-  function createEndpoint (element, onReceive) {
+  function createEndpoint (parentObject, onReceive) {
     var _outputs = {};
     var _inputs = {};
     var _connections = {
+      _parent: parentObject,
+      getOutputConnections: function () {
+        return _outputs;
+      },
+      getInputConnections: function () {
+        return _inputs;
+      },
       getOutputConnection: function (outputType, inputEndpoint, inputType) {
         var outputs = _outputs[outputType];
         if (outputs) {
@@ -41,7 +48,7 @@ define([], function () {
         if (inputs) {
           var idx = inputs.indexOf(connection);
           if (idx > -1) {
-            inputs.slice(idx, 1);
+            inputs.splice(idx, 1);
           }
         }
       },
@@ -50,7 +57,7 @@ define([], function () {
         if (outputs) {
           var idx = outputs.indexOf(connection);
           if (idx > -1) {
-            outputs.slice(idx, 1);
+            outputs.splice(idx, 1);
           }
         }
       },

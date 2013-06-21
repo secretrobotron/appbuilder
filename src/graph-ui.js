@@ -72,6 +72,10 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
     overlay.addEventListener('mouseover', onMouseOver, false);
     overlay.addEventListener('mouseout', onMouseOut, false);
 
+    overlay.turnOn = function () {
+      overlay.classList.add('on');
+    };
+
     overlay.stop = function () {
       clearInterval(interval);
       overlay.removeEventListener('mouseover', onMouseOver, false);
@@ -93,14 +97,11 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
         __graphElements.splice(idx, 1);
       }
     },
-    createOverlays: function (ignoreElement) {
-
+    createOverlays: function () {
       __graphElements.forEach(function (element) {
-        if (!ignoreElement || ignoreElement !== element) {
-          var o = createOverlayForElement(element);
-          document.body.appendChild(o);
-          __overlays.push(o);
-        }
+        var o = createOverlayForElement(element);
+        document.body.appendChild(o);
+        __overlays.push(o);
       });
     },
     destroyOverlays: function () {
@@ -130,11 +131,24 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
     startDrawingPath: function (startX, startY) {
       __lineElement = createLineElement(startX, startY);
       document.body.appendChild(__lineElement);
+
+      var elementAtStartPoint = document.elementFromPoint(startX, startY);
+
+      while (elementAtStartPoint && !elementAtStartPoint._appbuilder) {
+        elementAtStartPoint = elementAtStartPoint.parentNode;
+      }
+
+      if (elementAtStartPoint) {
+        __connectionElement = elementAtStartPoint;
+        __connectionElement._appbuilder.overlay.turnOn();
+      }
     },
     stopDrawingPath: function () {
       __lineElement.stop();
       document.body.removeChild(__lineElement);
-      return __connectionElement;
+      var tmpConnectionElement = __connectionElement;
+      __connectionElement = null;
+      return tmpConnectionElement;
     }
   };
 
