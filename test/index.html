@@ -3,6 +3,7 @@
     <script src="../lib/require.js"></script>
     <script src="test-config.js"></script>
     <script src="lib/gif.js"></script>
+    <script src="../lib/polymer.min.js"></script>
     <style>
       html, body {
         padding: 0;
@@ -59,12 +60,17 @@
         width: 90px;
       }
       #roll {
-        margin: 10px 10px;
+        margin: 10px auto;
+        width: 305px;
+        background-color: rgb(96,108,136);
+        background-image: url('assets/film-strip.png');
+        background-size: auto 70px;
+        min-height: 70px;
       }
       #roll canvas {
         display: inline;
-        width: 31%;
-        margin: 1%;
+        width: 63px;
+        margin: 11.5px 6.5px;
       }
     </style>
   </head>
@@ -107,7 +113,7 @@
           });
 
         videoElement.addEventListener('canplay', function (e) {
-          rollElement._appbuilder.sendOutput('isReady');
+          shutterElement._appbuilder.sendOutput('isReady');
         }, false);
 
         function initButtonElement (buttonElement) {
@@ -137,6 +143,7 @@
           var disabled = true;
 
           buttonElement._appbuilder.onInput('enable', function () {
+            console.log('enable!!');
             disabled = false;
             buttonElement.classList.remove('disabled');
           });
@@ -146,21 +153,9 @@
             buttonElement.classList.add('disabled');
           });
 
-          buttonElement.addEventListener('mousedown', function (e) {
-            if (disabled) {
-              e.stopPropagation();
-              e.preventDefault();
-              return false;
-            }
-          }, false);
-
           buttonElement.addEventListener('click', function (e) {
             if (!disabled) {
               buttonElement._appbuilder.sendOutput('click');
-            }
-            else {
-              e.preventDefault();
-              return false;
             }
           }, false);
         }
@@ -200,15 +195,15 @@
           inputs: {
             insertPicture: {
               type: 'image',
-              description: 'store a picture in the roll'
+              description: 'store the image in {{name}}'
             },
             createGif: {
               type: 'event',
-              description: 'create a GIF from the roll'
+              description: 'create a GIF from the images in {{name}}'
             },
             clear: {
               type: 'event',
-              description: 'clear the roll'
+              description: 'clear {{name}}'
             }
           },
           outputs: {
@@ -225,6 +220,10 @@
               description: 'is empty'
             }
           }
+        });
+
+        shutterElement._appbuilder.events.on('connect', function (e) {
+          console.log(e);
         });
 
         shutterElement._appbuilder.onInput('takePicture', function(data) {
@@ -306,7 +305,7 @@
           shutterElement._appbuilder.connectOutput('pictureTaken', rollElement._appbuilder, 'insertPicture');
           rollElement._appbuilder.connectOutput('gifCreated', shutterElement._appbuilder, 'showImage');
           rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
-          rollElement._appbuilder.connectOutput('isReady', button1Element._appbuilder, 'enable');
+          shutterElement._appbuilder.connectOutput('isReady', button1Element._appbuilder, 'enable');
         }
       });
     </script>

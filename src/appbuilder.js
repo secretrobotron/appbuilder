@@ -17,36 +17,40 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     var acceptButton = __sentencePanelElement.querySelector('button[data-action="accept"]');
     var cancelButton = __sentencePanelElement.querySelector('button[data-action="cancel"]');
 
+    outputSelectElement.innerHTML = '';
+    inputSelectElement.innerHTML = '';
+
     function onInputSelectMouseOver (e) {
-      graph_ui_module.turnOnSpecificOverlay(inputElement);
+      graph_ui_module.createSpecificOverlay(inputElement);
     }
 
     function onOutputSelectMouseOver (e) {
-      graph_ui_module.turnOnSpecificOverlay(outputElement);
+      graph_ui_module.createSpecificOverlay(outputElement);
     }
 
     function onInputSelectMouseOut (e) {
-      graph_ui_module.turnOffSpecificOverlay(inputElement);
+      graph_ui_module.destroySpecificOverlay(inputElement);
     }
 
     function onOutputSelectMouseOut (e) {
-      graph_ui_module.turnOffSpecificOverlay(outputElement);
+      graph_ui_module.destroySpecificOverlay(outputElement);
     }
 
     function fillSelectElement (selectElement, dictionary, name) {
       Object.keys(dictionary).forEach(function (key) {
         var entry = dictionary[key];
         var optionElement = document.createElement('option');
-        var modifiedDescription = entry.description.replace('{{name}}', name);
+        var modifiedDescription = entry.description.replace('{{name}}', 'the ' + name);
         optionElement.appendChild(document.createTextNode(modifiedDescription));
         optionElement.title = '' + key + ' (' + entry.type + ')';
+        optionElement.value = key;
         selectElement.appendChild(optionElement);
       });
     }
 
     function onAcceptButtonClick (e) {
       controller.clear();
-      onAccept && onAccept();
+      onAccept && onAccept(outputSelectElement.value, inputSelectElement.value);
     }
 
     function onCancelButtonClick (e) {
@@ -83,8 +87,8 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   }
 
   var appbuilder = window.appbuilder = {
-    turnOnElementOverlays: function () {
-      graph_ui_module.turnOnOverlays();
+    createElementOverlays: function () {
+      graph_ui_module.createOverlays();
     },
     initElement: function (element, definition) {
       definition = definition || element._appbuilder;
@@ -133,9 +137,12 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
       graph_ui_module.addElement(element);
 
       function onMouseDown (e) {
+        if (e.which !== 1) { return; }
+        e.stopPropagation();
+        e.preventDefault();
+
         var timeout = -1;
         var mouseX = e.clientX, mouseY = e.clientY;
-
         function onMouseMove (e) {
           mouseX = e.clientX;
           mouseY = e.clientY;
@@ -152,14 +159,16 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
           window.removeEventListener('mousemove', onMouseMove, false);
           element.addEventListener('mousedown', onMouseDown, false);
           var connectionElement = graph_ui_module.stopDrawingPath();
-          graph_ui_module.turnOffOverlays();
+          graph_ui_module.destroyOverlays();
           if (connectionElement) {
             createConnectionSentence(element, connectionElement,
-              function () {
-
+              function (outputType, inputType) {
+                console.log(outputType, inputType);
+                element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
+                graph_ui_module.destroyOverlays();
               },
               function () {
-                // cancel
+                graph_ui_module.destroyOverlays();
               });
           }
         }
@@ -170,7 +179,7 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
           graph_ui_module.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
           window.removeEventListener('mousemove', onMouseMove, false);
           timeout = -1;
-          graph_ui_module.turnOnOverlays(element);
+          graph_ui_module.createOverlays(element);
         }, 500);
 
         window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);

@@ -90,10 +90,11 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
     removeElement: function (element) {
       var idx = __graphElements.indexOf(element);
       if (idx > -1) {
-        __graphElements.slice(idx, 1);
+        __graphElements.splice(idx, 1);
       }
     },
-    turnOnOverlays: function (ignoreElement) {
+    createOverlays: function (ignoreElement) {
+
       __graphElements.forEach(function (element) {
         if (!ignoreElement || ignoreElement !== element) {
           var o = createOverlayForElement(element);
@@ -102,19 +103,20 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
         }
       });
     },
-    turnOffOverlays: function () {
+    destroyOverlays: function () {
       while (__overlays.length > 0) {
-        __overlays[0].stop();
-        __overlays[0].parentNode.removeChild(__overlays.shift());
+        var firstOverlay = __overlays.shift();
+        firstOverlay.stop();
+        firstOverlay.parentNode.removeChild(firstOverlay);
       }
     },
-    turnOnSpecificOverlay: function (element) {
+    createSpecificOverlay: function (element) {
       var o = createOverlayForElement(element);
       document.body.appendChild(o);
       o.classList.add('on');
       __overlays.push(o);
     },
-    turnOffSpecificOverlay: function (overlay) {
+    destroySpecificOverlay: function (overlay) {
       if (!overlay.classList.contains('webmaker-appbuilder-overlay')) {
         overlay = overlay._appbuilder.overlay;
       }
@@ -122,7 +124,7 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
       overlay.parentNode.removeChild(overlay);
       var idx = __overlays.indexOf(overlay);
       if (idx > -1) {
-        __overlays.slice(idx, 1);
+        __overlays.splice(idx, 1);
       }
     },
     startDrawingPath: function (startX, startY) {

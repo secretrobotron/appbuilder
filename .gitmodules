@@ -1,3 +1,6 @@
 [submodule "external/gif.js"]
 	path = external/gif.js
 	url = https://github.com/jnordberg/gif.js.git
+[submodule "external/polymer"]
+	path = external/polymer
+	url = git://github.com/Polymer/polymer-all.git
