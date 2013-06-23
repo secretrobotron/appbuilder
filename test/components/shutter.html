@@ -29,6 +29,8 @@
       this.register({
         prototype: {
           readyCallback: function() {
+            var connectionElements = this.querySelectorAll('appbuilder-connection');
+
             this.innerHTML = template.innerHTML;
 
             var thisElement = this;
@@ -68,7 +70,8 @@
                     type: 'image',
                     description: '{{name}} takes a picture'
                   }
-                }
+                },
+                connectionElements: connectionElements
               });
 
               videoElement.addEventListener('canplay', function (e) {

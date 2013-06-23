@@ -51,7 +51,9 @@
   </head>
   <body>
     <div id="container" class="no-user-select">
-      <appbuilder-shutter id="shutter"></appbuilder-shutter>
+      <appbuilder-shutter id="shutter">
+        <appbuilder-connection to="button1" type="isReady"/>
+      </appbuilder-shutter>
       <div id="buttons">
         <appbuilder-button id="button1" name="Shutter Button" class="disabled">Take Picture</appbuilder-button>
         <appbuilder-button id="button2" name="Gif Button" class="disabled">Create Gif</appbuilder-button>

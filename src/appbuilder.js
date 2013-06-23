@@ -1,6 +1,8 @@
 define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'events', 'connections'],
   function (appbuilder_html, appbuilder_css, ui_util, graph_ui_module, events_module, connections_module) {
 
+  var __registeredElements = [];
+
   ui_util.attachCSSFromString(appbuilder_css);
   var __rootHTML = ui_util.getDomFragmentFromString(appbuilder_html);
 
@@ -279,6 +281,8 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
       element.addEventListener('mousedown', onMouseDown, false);
 
+      __registeredElements.push(element);
+
       return controller;
     }
   };
@@ -287,6 +291,17 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     var customEvent = document.createEvent('CustomEvent');
     customEvent.initCustomEvent('appbuilderloaded', false, false, appbuilder);
     window.dispatchEvent(customEvent);
+
+    setTimeout(function () {
+      __registeredElements.forEach(function (element) {
+        var connectionElements = element._appbuilder.definition.connectionElements;
+        if (connectionElements && connectionElements.length) {
+          connectionElements.forEach(function (connectionElement) {
+            var inputElementName = connectionElement.getAttribute('to');
+          });
+        }
+      });
+    }, 20);
   }, 10);
 
   return appbuilder;
