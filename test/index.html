@@ -52,7 +52,7 @@
   <body>
     <div id="container" class="no-user-select">
       <appbuilder-shutter id="shutter">
-        <appbuilder-connection to="button1" type="isReady"/>
+        <appbuilder-connection to="#button1" out="isReady" in="enable" />
       </appbuilder-shutter>
       <div id="buttons">
         <appbuilder-button id="button1" name="Shutter Button" class="disabled">Take Picture</appbuilder-button>
@@ -60,6 +60,9 @@
         <appbuilder-button id="button3" name="Clear Button" class="disabled">Clear</appbuilder-button>
       </div>
       <div id="roll" name="Image Library"></div>
+      
+      <appbuilder-connection from="#button1" to="#shutter" out="click" in="takePicture" />
+      <appbuilder-connection from="#shutter" to="#roll" out="pictureTaken" in="insertPicture" />
     </div>
     <script>
       window.addEventListener('appbuilderloaded', function (e) {

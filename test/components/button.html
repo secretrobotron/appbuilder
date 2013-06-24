@@ -38,7 +38,7 @@
             var button = this.querySelector('button');
             button.innerHTML = tmpInnerHTML;
 
-            window.addEventListener('appbuilderloaded', function (e) {
+            function initAppbuilder (e) {
               appbuilder.initElement(thisElement, {
                 inputs: {
                   click: {
@@ -79,7 +79,14 @@
                   thisElement._appbuilder.sendOutput('click');
                 }
               }, false);              
-            }, false);
+            }
+
+            if (!window.appbuilder) {
+              window.addEventListener('appbuilderloaded', initAppbuilder, false);
+            }
+            else {
+              initAppbuilder();
+            }
           }
         }
       });

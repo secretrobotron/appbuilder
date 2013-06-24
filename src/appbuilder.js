@@ -16,6 +16,8 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
   var __currentSentenceController;
 
+  var __connectionElementsForProcessing = [];
+
   function showConnectionList (element, onAccept, onCancel) {
     var acceptButton = __connectionListElement.querySelector('button[data-action="accept"]');
     var cancelButton = __connectionListElement.querySelector('button[data-action="cancel"]');
@@ -181,6 +183,7 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
         controller.events.dispatch('receive:' + type, data);
       });
 
+      element.id = element.id || 'appbuilder-element-' + __registeredElements.length;
       controller.name = element.name || element.getAttribute('name') || element.id || element.tagName;
       controller.definition = definition;
 
@@ -283,26 +286,62 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
       __registeredElements.push(element);
 
+      if (controller.definition.connectionElements &&
+          controller.definition.connectionElements.length &&
+          typeof controller.definition.connectionElements !== 'string') {
+        Array.prototype.slice.call(controller.definition.connectionElements).forEach(function (connectionElement) {
+          var querySelector = element.id ? '#' + element.id : (element.name ? element.tagName + '[name="' + element.name + '"]' : '');
+          connectionElement.setAttribute('from', querySelector);
+          __connectionElementsForProcessing.push(connectionElement);
+        });
+      }
+
       return controller;
     }
   };
 
-  setTimeout(function () {
+  function processConnectionElement (connectionElement) {
+    var outputElement;
+
+    outputElement = connectionElement.parentNode;
+    while (outputElement && __registeredElements.indexOf(outputElement) === -1) {
+      outputElement = outputElement.parentNode;
+    }
+
+    if (!outputElement) {
+      if (connectionElement.hasAttribute('from')) {
+        outputElement = document.querySelector(connectionElement.getAttribute('from'));
+      }
+    }
+
+    if (outputElement) {
+      var inputElementName = connectionElement.getAttribute('to');
+      var outputType = connectionElement.getAttribute('out');
+      var inputType = connectionElement.getAttribute('in');
+      var inputElement = document.querySelector(inputElementName);
+
+      if (inputElement && outputType && inputType && inputElement._appbuilder) {
+        outputElement._appbuilder.connectOutput(outputType, inputElement._appbuilder, inputType);
+      }
+    }
+  }
+
+  function initPage () {
     var customEvent = document.createEvent('CustomEvent');
     customEvent.initCustomEvent('appbuilderloaded', false, false, appbuilder);
     window.dispatchEvent(customEvent);
-
     setTimeout(function () {
-      __registeredElements.forEach(function (element) {
-        var connectionElements = element._appbuilder.definition.connectionElements;
-        if (connectionElements && connectionElements.length) {
-          connectionElements.forEach(function (connectionElement) {
-            var inputElementName = connectionElement.getAttribute('to');
-          });
-        }
-      });
+      var connectionElements = Array.prototype.slice.call(document.querySelectorAll('appbuilder-connection')).concat(__connectionElementsForProcessing);
+      connectionElements.forEach(processConnectionElement);
     }, 20);
-  }, 10);
+  }
+
+  if (['complete', 'interactive'].indexOf(document.readyState > -1)) {
+    setTimeout(initPage, 100);
+  }
+  else {
+    document.addEventListener('DOMContentLoaded', initPage, false);
+  }
 
   return appbuilder;
 

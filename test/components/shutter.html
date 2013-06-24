@@ -37,7 +37,7 @@
             var videoElement = thisElement.querySelector('video');
             var imageContainerElement = thisElement.querySelector('div[data-shutter-image-container]');
 
-            window.addEventListener('appbuilderloaded', function (e) {
+            function initAppbuilder (e) {
               var __getUserMedia = navigator.getUserMedia ||
                                    navigator.webkitGetUserMedia ||
                                    navigator.mozGetUserMedia ||
@@ -114,7 +114,14 @@
                 function (err) {
                   console.err('Couldn\'t prepare camera.');
                 });
-            }, false);
+            }
+
+            if (!window.appbuilder) {
+              window.addEventListener('appbuilderloaded', initAppbuilder, false);
+            }
+            else {
+              initAppbuilder();
+            }
           }
         }
       });
