@@ -1,8 +1,8 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <script src="../lib/platform.min.js"></script>
-    <script src="../lib/require.min.js" data-main="../src/appbuilder"></script>
+    <script src="../../lib/platform.min.js"></script>
+    <script src="../../lib/require.min.js" data-main="../../src/appbuilder"></script>
     <script src="lib/gif.js"></script>
     <link rel="import" href="components/shutter.html">
     <link rel="import" href="components/button.html">
@@ -63,6 +63,7 @@
       <div id="roll" name="Image Library"></div>
       <appbuilder-connection from="#button1" to="#shutter" out="click" in="takePicture" />
       <appbuilder-connection from="#shutter" to="#roll" out="pictureTaken" in="insertPicture" />
+      <appbuilder-connection from="#roll" to="#button2" out="hasPictures" in="enable" />
     </div>
     <script>
       window.addEventListener('appbuilderloaded', function (e) {
@@ -148,25 +149,6 @@
         });
 
         appbuilder.updateStateListenersOnConnect(rollElement._appbuilder);
-
-        if (window.location.search.indexOf('graphinit') > -1) {
-          button1Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'takePicture');
-          button2Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'createGif');
-          button2Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'disable');
-          button2Element._appbuilder.connectOutput('click', button2Element._appbuilder, 'disable');
-          button2Element._appbuilder.connectOutput('click', button3Element._appbuilder, 'disable');
-          button3Element._appbuilder.connectOutput('click', rollElement._appbuilder, 'clear');
-          button3Element._appbuilder.connectOutput('click', shutterElement._appbuilder, 'clearImage');
-          button3Element._appbuilder.connectOutput('click', button1Element._appbuilder, 'enable');
-          rollElement._appbuilder.connectOutput('hasPictures', button2Element._appbuilder, 'enable');
-          rollElement._appbuilder.connectOutput('hasPictures', button3Element._appbuilder, 'enable');
-          rollElement._appbuilder.connectOutput('isEmpty', button2Element._appbuilder, 'disable');
-          rollElement._appbuilder.connectOutput('isEmpty', button3Element._appbuilder, 'disable');
-          shutterElement._appbuilder.connectOutput('pictureTaken', rollElement._appbuilder, 'insertPicture');
-          rollElement._appbuilder.connectOutput('gifCreated', shutterElement._appbuilder, 'showImage');
-          rollElement._appbuilder.connectOutput('gifCreated', button3Element._appbuilder, 'enable');
-          shutterElement._appbuilder.connectOutput('isReady', button1Element._appbuilder, 'enable');
-        }
       }, false);
     </script>
   </body>
