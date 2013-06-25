@@ -8,7 +8,8 @@ module.exports = function(grunt) {
           name: '<%= pkg.name %>',
           baseUrl: "src",
           out: "dist/<%= pkg.name %>.js",
-          optimize: 'none'
+          optimize: 'none',
+          include: ['../lib/require']
         }
       }
     },
