@@ -85,7 +85,12 @@
                 var canvas = document.createElement('canvas');
                 canvas.width = videoElement.videoWidth;
                 canvas.height = videoElement.videoHeight;
-                canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+                // Hack for polymer's wrapper. Firefox won't accept anything but the elements it expects.
+                // So, dig the impl out of a wrapper if there is one.
+                var trueVideoElement = videoElement.impl ? videoElement.impl : videoElement;
+
+                canvas.getContext('2d').drawImage(trueVideoElement, 0, 0, canvas.width, canvas.height);
                 appbuilderController.sendOutput('pictureTaken', canvas);
               });
 

@@ -4,18 +4,12 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   var __registeredElements = [];
 
   ui_util.attachCSSFromString(appbuilder_css);
-  var __rootHTML = ui_util.getDomFragmentFromString(appbuilder_html);
+  var __rootHTML;
 
-  var __sentencePanelElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-sentence').cloneNode(true);
-  document.body.appendChild(__sentencePanelElement);
-
-  var __connectionListElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-list').cloneNode(true);
-  var __connectionListDetailElement = __connectionListElement.querySelector('.connection-details');
-  document.body.appendChild(__connectionListElement);
-  __connectionListDetailElement.parentNode.removeChild(__connectionListDetailElement);
-
+  var __sentencePanelElement;
+  var __connectionListElement;
+  var __connectionListDetailElement;
   var __currentSentenceController;
-
   var __connectionElementsForProcessing = [];
 
   function showConnectionList (element, onAccept, onCancel) {
@@ -225,7 +219,6 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
       controller.disconnectOutput = function (connection) {
         controller.connections.removeOutputConnection(connection);
         connection.inputEndpoint.removeInputConnection(connection);
-        console.log(controller.connections.getOutputConnections());
       };
 
       graph_ui_module.addElement(element);
@@ -327,16 +320,30 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   }
 
   function initPage () {
+    // This dom fragment init is here to let the Polymer polyfills load and init first
+    __rootHTML = ui_util.getDomFragmentFromString(appbuilder_html);
+    __sentencePanelElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-sentence').cloneNode(true);
+    __connectionListElement = __rootHTML.querySelector('.webmaker-appbuilder-connection-list').cloneNode(true);
+    __connectionListDetailElement = __connectionListElement.querySelector('.connection-details');
+
+    document.body.appendChild(__sentencePanelElement);
+    document.body.appendChild(__connectionListElement);
+    __connectionListDetailElement.parentNode.removeChild(__connectionListDetailElement);
+
+    window.addEventListener('appbuilderloaded', function (e) {
+      // admittedly hacky
+      setTimeout(function () {
+        var connectionElements = Array.prototype.slice.call(document.querySelectorAll('appbuilder-connection')).concat(__connectionElementsForProcessing);
+        connectionElements.forEach(processConnectionElement);
+      }, 100);
+    }, false);
+
     var customEvent = document.createEvent('CustomEvent');
     customEvent.initCustomEvent('appbuilderloaded', false, false, appbuilder);
     window.dispatchEvent(customEvent);
-    setTimeout(function () {
-      var connectionElements = Array.prototype.slice.call(document.querySelectorAll('appbuilder-connection')).concat(__connectionElementsForProcessing);
-      connectionElements.forEach(processConnectionElement);
-    }, 20);
   }
 
-  if (['complete', 'interactive'].indexOf(document.readyState > -1)) {
+  if (document.body && ['complete', 'interactive'].indexOf(document.readyState > -1)) {
     setTimeout(initPage, 100);
   }
   else {

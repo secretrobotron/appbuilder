@@ -1,13 +1,8 @@
 define([], function () {
   return {
     getDomFragmentFromString: function (inputString) {
-      var range = document.createRange();
-      var container = document.body || document.head;
-      var fragment;
-
-      range.selectNode(container);
-      fragment = range.createContextualFragment(inputString);
-
+      var fragment = document.createElement('div');
+      fragment.innerHTML = inputString;
       return fragment;
     },
     attachCSSFromString: function (cssString) {
