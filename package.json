@@ -1,0 +1,29 @@
+{
+  "name": "appbuilder",
+  "version": "0.0.0",
+  "description": "appbuilder prototype",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/secretrobotron/appbuilder.git"
+  },
+  "author": "",
+  "license": "MPL2",
+  "gitHead": "ba6806affd3080009936f4eb7a004045a46b6f82",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/secretrobotron/appbuilder/issues"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-requirejs": "~0.4.1"
+  }
+}
