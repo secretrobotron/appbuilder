@@ -6,10 +6,11 @@ module.exports = function(grunt) {
       compile: {
         options: {
           name: '<%= pkg.name %>',
-          baseUrl: "src",
+          baseUrl: 'src',
           out: "dist/<%= pkg.name %>.js",
           optimize: 'none',
-          include: ['../lib/require']
+          include: ['../lib/platform.min.js', '../lib/require'],
+          insertRequire: ['appbuilder']
         }
       }
     },
