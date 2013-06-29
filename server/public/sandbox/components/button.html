@@ -1,0 +1,95 @@
+<element name="appbuilder-button">
+  <template>
+    <style scoped>
+      appbuilder-button {
+        display: inline-block;
+        margin: 10px auto;
+        width: 90px;
+        height: 30px;
+        position: relative;
+      }
+
+      .disabled {
+        color: #ccc;
+      }
+
+      .disabled button {
+        color: #ccc;
+      }
+
+      button {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <button></button>
+  </template>
+  <script>
+    if (this !== window) {
+      var template = this.querySelector('template');
+      this.register({
+        prototype: {
+          readyCallback: function() {
+            var thisElement = this;
+
+            var tmpInnerHTML = this.innerHTML;
+            this.innerHTML = template.innerHTML;
+            
+            var button = this.querySelector('button');
+            button.innerHTML = tmpInnerHTML;
+
+            function initAppbuilder (e) {
+              appbuilder.initElement(thisElement, {
+                inputs: {
+                  click: {
+                    type: 'event',
+                    description: 'trigger {{name}}'
+                  },
+                  enable: {
+                    type: 'event',
+                    description: 'enable {{name}}'
+                  },
+                  disable: {
+                    type: 'event',
+                    description: 'disable {{name}}'
+                  }
+                },
+                outputs: {
+                  click: {
+                    type: 'event',
+                    description: '{{name}} is clicked'
+                  }
+                }
+              });
+              
+              var disabled = true;
+
+              thisElement._appbuilder.onInput('enable', function () {
+                disabled = false;
+                thisElement.classList.remove('disabled');
+              });
+
+              thisElement._appbuilder.onInput('disable', function () {
+                disabled = true;
+                thisElement.classList.add('disabled');
+              });
+
+              thisElement.addEventListener('click', function (e) {
+                if (!disabled) {
+                  thisElement._appbuilder.sendOutput('click');
+                }
+              }, false);              
+            }
+
+            if (!window.appbuilder) {
+              window.addEventListener('appbuilderloaded', initAppbuilder, false);
+            }
+            else {
+              initAppbuilder();
+            }
+          }
+        }
+      });
+    }
+  </script>
+</element>
