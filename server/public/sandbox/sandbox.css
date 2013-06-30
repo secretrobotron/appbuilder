@@ -5,17 +5,27 @@ html, body {
   margin: 0;
 }
 
-#component-toolbar {
-  list-style: none;
+#sandbox-toolbar {
   margin: 0;
   padding: 0;
   position: fixed;
   z-index: 9999;
-  height: 100px;
+  height: 150px;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  font-family: sans-serif;
+  color: #fff;
+  padding: 5px;
+}
+
+#component-toolbar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: 100px;
 }
 
 #component-toolbar li {
@@ -39,7 +49,6 @@ html, body {
 
 #phone-container {
   position: relative;
-  border: 1px solid #000;
   width: 300px;
   height: 450px;
   padding: 20px;
@@ -57,7 +66,7 @@ html, body {
 
 #phone-container.droppable-over:after {
   content: '';
-  background-color: rgb(50, 50, 210);
+  background-color: rgb(180, 180, 255);
   position: absolute;
   top: 0;
   left: 0;

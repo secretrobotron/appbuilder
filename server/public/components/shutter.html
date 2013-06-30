@@ -28,6 +28,10 @@
         "type": "image",
         "description": "{{name}} takes a picture"
       }
+    },
+    "dimensions": {
+      "width": 250,
+      "height": 200
     }
   }
 </script>
@@ -52,27 +56,21 @@
       appbuilder-shutter div[data-shutter-image-container] img {
         width: 100%;
       }
-
       appbuilder-shutter[data-thumbnail-only] {
         height: 100%;
         width: 100%;
       }
-      appbuilder-shutter[data-thumbnail-only]:after {
-        content: '';
+      appbuilder-shutter div[data-camera-placeholder] {
         background-image: url('http://upload.wikimedia.org/wikipedia/commons/d/d1/Camera_font_awesome.svg');
         background-size: contain;
-        background-position: 50%;
         background-repeat: no-repeat;
-        position: absolute;
-        top: 0;
-        left: 0;
+        background-position: 50%;
         width: 100%;
         height: 100%;
-        opacity: .7;
       }
     </style>
     <video></video>
-    <div data-shutter-image-container></div>
+    <div data-shutter-image-container><div data-camera-placeholder></div>
   </template>
   <script>
     if (this !== window) {
@@ -80,6 +78,12 @@
       this.register({
         prototype: {
           readyCallback: function() {
+            function emptyImageContainer () {
+              while(imageContainerElement.firstChild) {
+                imageContainerElement.removeChild(imageContainerElement.firstChild);
+              }
+            }
+
             var __getUserMedia = navigator.getUserMedia ||
                                  navigator.webkitGetUserMedia ||
                                  navigator.mozGetUserMedia ||
@@ -96,6 +100,8 @@
             var videoElement = thisElement.querySelector('video');
             var imageContainerElement = thisElement.querySelector('div[data-shutter-image-container]');
 
+            videoElement.hidden = true;
+
             function initDemo () {
               var demoImage = new Image();
               demoImage.src = 'http://upload.wikimedia.org/wikipedia/commons/d/d1/Camera_font_awesome.svg';              
@@ -109,6 +115,8 @@
                   var vendorURL = window.URL || window.webkitURL;
                   videoElement.src = vendorURL.createObjectURL(stream);
                 }
+                emptyImageContainer();
+                videoElement.hidden = false;
                 videoElement.play();
               },
               function (err) {
@@ -174,9 +182,7 @@
 
               appbuilderController.onInput('clearImage', function (img) {
                 videoElement.hidden = false;
-                while(imageContainerElement.firstChild) {
-                  imageContainerElement.removeChild(imageContainerElement.firstChild);
-                }
+                emptyImageContainer();
               });
             }
 

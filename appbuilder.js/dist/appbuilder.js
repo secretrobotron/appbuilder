@@ -2882,7 +2882,19 @@ define('appbuilder',['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', '
       });
     });
   };
-    
+  
+  appbuilder.enableGraphMouseEvents = function () {
+    __registeredElements.forEach(function (element) {
+      element._appbuilder.enableGraphMouseEvents();
+    });
+  };
+
+  appbuilder.disableGraphMouseEvents = function () {
+    __registeredElements.forEach(function (element) {
+      element._appbuilder.disableGraphMouseEvents();
+    });
+  };
+
   appbuilder.initElement = function (element, definition) {
     definition = definition || element._appbuilder;
     if (!definition) {
@@ -2939,6 +2951,14 @@ define('appbuilder',['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', '
       connection.inputEndpoint.removeInputConnection(connection);
     };
 
+    controller.enableGraphMouseEvents = function () {
+      element.addEventListener('mousedown', onMouseDown, false);
+    };
+
+    controller.disableGraphMouseEvents = function () {
+      element.removeEventListener('mousedown', onMouseDown, false);
+    };
+
     graph_ui_module.addElement(element);
 
     function onMouseDown (e) {
@@ -2992,8 +3012,6 @@ define('appbuilder',['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', '
       window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
       element.removeEventListener('mousedown', onMouseDown, false);
     }
-
-    element.addEventListener('mousedown', onMouseDown, false);
 
     __registeredElements.push(element);
 
