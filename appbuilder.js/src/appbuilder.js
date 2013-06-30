@@ -152,145 +152,147 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     return controller;
   }
 
-  var appbuilder = window.appbuilder = {
-    createElementOverlays: function () {
+  var appbuilder = window.appbuilder = window.appbuilder || {};
+
+  appbuilder.createElementOverlays = function () {
       graph_ui_module.createOverlays();
-    },
-    updateStateListenersOnConnect: function (controller) {
-      controller.events.on('connect', function (e) {
-        Object.keys(controller.states).forEach(function (type) {
-          if (e.detail.type === type && controller.states[type]) {
-            e.detail.connection.send();
-          }
-        });
+  };
+    
+  appbuilder.updateStateListenersOnConnect = function (controller) {
+    controller.events.on('connect', function (e) {
+      Object.keys(controller.states).forEach(function (type) {
+        if (e.detail.type === type && controller.states[type]) {
+          e.detail.connection.send();
+        }
       });
-    },
-    initElement: function (element, definition) {
-      definition = definition || element._appbuilder;
-      if (!definition) {
-        throw "No definition found for element.";
-      }
-
-      var controller = element._appbuilder = {};
-      controller.events = events_module.createEventManager();
-      controller.connections = connections_module.createEndpoint(controller, function (type, data) {
-        controller.events.dispatch('receive:' + type, data);
-      });
-
-      element.id = element.id || 'appbuilder-element-' + __registeredElements.length;
-      controller.name = element.name || element.getAttribute('name') || element.id || element.tagName;
-      controller.definition = definition;
-
-      controller.states = definition.states || {};
-
-      controller.onInput = function (type, handler) {
-        controller.events.on('receive:' + type, function (e) {
-          handler(e.data || e.detail);
-        });
-      };
-
-      controller.offInput = function (type, handler) {
-      };
-
-      controller.sendOutput = function (outputType, data) {
-        controller.connections.send(outputType, data);
-      };
-
-      controller.connectOutput = function (outputType, otherObject, inputType) {
-        var connection = connections_module.createConnection(controller.connections, outputType, otherObject.connections, inputType);
-        controller.connections.addOutputConnection(connection);
-        otherObject.connections.addInputConnection(connection);
-        controller.events.dispatch('connect', {
-          to: otherObject,
-          type: outputType,
-          connection: connection
-        });
-      };
-
-      controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
-        var connection = controller.connections.getOutputConection(outputType, from, inputType);
-        if (connection) {
-          controller.removeOutputConnection(connection);
-          otherObject.connections.removeInputConnection(connection);
-        }
-        controller.events.dispatch('disconnect', otherObject);
-      };
-
-      controller.disconnectOutput = function (connection) {
-        controller.connections.removeOutputConnection(connection);
-        connection.inputEndpoint.removeInputConnection(connection);
-      };
-
-      graph_ui_module.addElement(element);
-
-      function onMouseDown (e) {
-        if (e.which !== 1) { return; }
-        e.stopPropagation();
-        e.preventDefault();
-
-        var timeout = -1;
-        var mouseX = e.clientX, mouseY = e.clientY;
-
-        function onMouseUpBeforeTimeout (e) {
-          window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
-          element.addEventListener('mousedown', onMouseDown, false);
-          clearTimeout(timeout);
-        }
-
-        function onMouseUpAfterTimeout (e) {
-          window.removeEventListener('mouseup', onMouseUpAfterTimeout, false);
-          element.addEventListener('mousedown', onMouseDown, false);
-          var connectionElement = graph_ui_module.stopDrawingPath();
-          graph_ui_module.destroyOverlays();
-          if (connectionElement) {
-            if (connectionElement !== element) {
-              openConnectionSentencePanel(element, connectionElement,
-                function (outputType, inputType) {
-                  element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
-                  graph_ui_module.destroyOverlays();
-                },
-                function () {
-                  graph_ui_module.destroyOverlays();
-                });
-            }
-            else {
-              showConnectionList(element, function (connectionsToDestroy) {
-                connectionsToDestroy.forEach(function (connection) {
-                  controller.disconnectOutput(connection);
-                });
-              });
-            }
-          }
-        }
-
-        timeout = setTimeout(function () {
-          window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
-          window.addEventListener('mouseup', onMouseUpAfterTimeout, false);
-          graph_ui_module.createOverlays();
-          graph_ui_module.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
-          timeout = -1;
-        }, 500);
-
-        window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
-        element.removeEventListener('mousedown', onMouseDown, false);
-      }
-
-      element.addEventListener('mousedown', onMouseDown, false);
-
-      __registeredElements.push(element);
-
-      if (controller.definition.connectionElements &&
-          controller.definition.connectionElements.length &&
-          typeof controller.definition.connectionElements !== 'string') {
-        Array.prototype.slice.call(controller.definition.connectionElements).forEach(function (connectionElement) {
-          var querySelector = element.id ? '#' + element.id : (element.name ? element.tagName + '[name="' + element.name + '"]' : '');
-          connectionElement.setAttribute('from', querySelector);
-          __connectionElementsForProcessing.push(connectionElement);
-        });
-      }
-
-      return controller;
+    });
+  };
+    
+  appbuilder.initElement = function (element, definition) {
+    definition = definition || element._appbuilder;
+    if (!definition) {
+      throw "No definition found for element.";
     }
+
+    var controller = element._appbuilder = {};
+    controller.events = events_module.createEventManager();
+    controller.connections = connections_module.createEndpoint(controller, function (type, data) {
+      controller.events.dispatch('receive:' + type, data);
+    });
+
+    element.id = element.id || 'appbuilder-element-' + __registeredElements.length;
+    controller.name = element.name || element.getAttribute('name') || element.id || element.tagName;
+    controller.definition = definition;
+
+    controller.states = definition.states || {};
+
+    controller.onInput = function (type, handler) {
+      controller.events.on('receive:' + type, function (e) {
+        handler(e.data || e.detail);
+      });
+    };
+
+    controller.offInput = function (type, handler) {
+    };
+
+    controller.sendOutput = function (outputType, data) {
+      controller.connections.send(outputType, data);
+    };
+
+    controller.connectOutput = function (outputType, otherObject, inputType) {
+      var connection = connections_module.createConnection(controller.connections, outputType, otherObject.connections, inputType);
+      controller.connections.addOutputConnection(connection);
+      otherObject.connections.addInputConnection(connection);
+      controller.events.dispatch('connect', {
+        to: otherObject,
+        type: outputType,
+        connection: connection
+      });
+    };
+
+    controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
+      var connection = controller.connections.getOutputConection(outputType, from, inputType);
+      if (connection) {
+        controller.removeOutputConnection(connection);
+        otherObject.connections.removeInputConnection(connection);
+      }
+      controller.events.dispatch('disconnect', otherObject);
+    };
+
+    controller.disconnectOutput = function (connection) {
+      controller.connections.removeOutputConnection(connection);
+      connection.inputEndpoint.removeInputConnection(connection);
+    };
+
+    graph_ui_module.addElement(element);
+
+    function onMouseDown (e) {
+      if (e.which !== 1) { return; }
+      e.stopPropagation();
+      e.preventDefault();
+
+      var timeout = -1;
+      var mouseX = e.clientX, mouseY = e.clientY;
+
+      function onMouseUpBeforeTimeout (e) {
+        window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
+        element.addEventListener('mousedown', onMouseDown, false);
+        clearTimeout(timeout);
+      }
+
+      function onMouseUpAfterTimeout (e) {
+        window.removeEventListener('mouseup', onMouseUpAfterTimeout, false);
+        element.addEventListener('mousedown', onMouseDown, false);
+        var connectionElement = graph_ui_module.stopDrawingPath();
+        graph_ui_module.destroyOverlays();
+        if (connectionElement) {
+          if (connectionElement !== element) {
+            openConnectionSentencePanel(element, connectionElement,
+              function (outputType, inputType) {
+                element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
+                graph_ui_module.destroyOverlays();
+              },
+              function () {
+                graph_ui_module.destroyOverlays();
+              });
+          }
+          else {
+            showConnectionList(element, function (connectionsToDestroy) {
+              connectionsToDestroy.forEach(function (connection) {
+                controller.disconnectOutput(connection);
+              });
+            });
+          }
+        }
+      }
+
+      timeout = setTimeout(function () {
+        window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
+        window.addEventListener('mouseup', onMouseUpAfterTimeout, false);
+        graph_ui_module.createOverlays();
+        graph_ui_module.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
+        timeout = -1;
+      }, 500);
+
+      window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
+      element.removeEventListener('mousedown', onMouseDown, false);
+    }
+
+    element.addEventListener('mousedown', onMouseDown, false);
+
+    __registeredElements.push(element);
+
+    if (controller.definition.connectionElements &&
+        controller.definition.connectionElements.length &&
+        typeof controller.definition.connectionElements !== 'string') {
+      Array.prototype.slice.call(controller.definition.connectionElements).forEach(function (connectionElement) {
+        var querySelector = element.id ? '#' + element.id : (element.name ? element.tagName + '[name="' + element.name + '"]' : '');
+        connectionElement.setAttribute('from', querySelector);
+        __connectionElementsForProcessing.push(connectionElement);
+      });
+    }
+
+    return controller;
   };
 
   function processConnectionElement (connectionElement) {

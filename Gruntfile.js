@@ -9,7 +9,7 @@ module.exports = function(grunt) {
           baseUrl: 'appbuilder.js/src',
           out: "appbuilder.js/dist/<%= pkg.name %>.js",
           optimize: 'none',
-          include: ['../lib/platform.min.js', '../lib/require'],
+          include: ['../lib/platform.js', '../lib/require'],
           insertRequire: ['appbuilder']
         }
       }
@@ -25,8 +25,8 @@ module.exports = function(grunt) {
     },
     watch: {
       scripts: {
-        files: ['src/**/*.js'],
-        tasks: ['livereload'],
+        files: ['appbuilder.js/src/**/*.js'],
+        tasks: ['default'],
         options: {
           nospawn: true,
         },
