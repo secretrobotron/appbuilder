@@ -1,0 +1,181 @@
+<html>
+  <head>
+    <script src="/vendor/jquery.min.js"></script>
+    <script src="/vendor/jquery-ui-1.10.3.custom.min.js"></script>
+    <script src="/vendor/jquery.gridster.js"></script>
+    <link rel="/vendor/jquery.gridster.min.css">
+    <link rel="/vendor/jquery-ui-1.10.3.custom.min.css">
+    <style>
+      #wrapper {
+        height: 400px;
+        width: 250px;
+        border: 1px solid #000;
+        overflow: hidden;
+      }
+
+      #grid {
+        width: 100%;
+        height: 100%;
+        background-color: #ccc;
+      }
+
+      .grid-item {
+        background: rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="grid">
+      </div>
+    </div>
+    <button>Make rocket go now</button>
+    <script>
+      (function () {
+        var grid = document.querySelector('#grid');
+        var $grid = $(grid);
+
+        var GRIDLOCK = {
+          init: function () {
+            var styleSheet = document.createElement('style');
+            styleSheet.innerHTML = '' +
+              '.GRIDLOCK {\n' +
+              '  position: relative;\n' +
+              '}\n' +
+              '.GRIDLOCK .GRID {\n' +
+              '  position: absolute;\n' +
+              '  top: 0;\n' +
+              '  left: 0;\n' +
+              '  width: 100%;\n' +
+              '  height: 100%;\n' +
+              '}\n' +
+              '.GRIDLOCK .CELL {\n' +
+              '  position: absolute;\n' +
+              '  border: 1px solid transparent;\n' +
+              '  display: block;\n' +
+              '  -webkit-user-select: none;\n' +
+              '     -moz-user-select: none;\n' +
+              '      -ms-user-select: none;\n' +
+              '          user-select: none;\n' +
+              '}\n' +
+              '.GRIDLOCK .CELL.on {\n' +
+              '  border: 1px solid #fff;\n' +
+              '  background: rgba(200, 200, 255, 0.9);\n' +
+              '}\n' +
+              '';
+            document.head.appendChild(styleSheet);
+          },
+          create: function (parentElement, gridSizeX, gridSizeY, numX, numY) {
+            var _cells = [];
+
+            var rect = parentElement.getBoundingClientRect();
+            numX = numX || rect.width / gridSizeX;
+            numY = numY || rect.height / gridSizeY;
+
+            parentElement.classList.add('GRIDLOCK');
+
+            var grid = document.createElement('div');
+            grid.classList.add('GRID');
+            parentElement.appendChild(grid);
+
+            var cell;
+
+            for (var i = 0; i < numX; ++i) {
+              for (var j = 0; j < numY; ++j) {
+                cell = document.createElement('div');
+                cell.classList.add('CELL');
+                cell.style.left = i * gridSizeX + 1 + 'px';
+                cell.style.top = j * gridSizeY + 1 + 'px';
+                cell.style.width = gridSizeX + 'px';
+                cell.style.height = gridSizeY + 'px';
+                grid.appendChild(cell);
+                _cells.push(cell);
+              }
+            }
+
+            function isCellCovered (cellRect, elementRect) {
+              return elementRect.top < cellRect.bottom && elementRect.top + elementRect.height > cellRect.top &&
+                elementRect.left < cellRect.right && elementRect.left + elementRect.width > cellRect.left;
+            }
+
+            return {
+              reset: function () {
+                _cells.forEach(function (cell) {
+                  cell.classList.remove('on');
+                });
+              },
+              evaluate: function (element) {
+                var elementRect = element.getBoundingClientRect();
+                var coveredRect = {top: 100000, bottom: 0, left: 1000000, right: 0};
+                _cells.forEach(function (cell) {
+                  var cellRect = cell.getBoundingClientRect();
+                  if (isCellCovered(cellRect, elementRect)) {
+                    coveredRect.top = Math.min(cellRect.top, coveredRect.top);
+                    coveredRect.bottom = Math.max(cellRect.bottom, coveredRect.bottom);
+                    coveredRect.left = Math.min(cellRect.left, coveredRect.left);
+                    coveredRect.right = Math.max(cellRect.right, coveredRect.right);
+                  }
+                });
+
+                var dl = elementRect.left - coveredRect.left;
+                var dr = coveredRect.right - elementRect.right;
+                var dt = elementRect.top - coveredRect.top;
+                var db = coveredRect.bottom - elementRect.bottom;
+                
+                var x = dl < dr ? coveredRect.left : coveredRect.right - elementRect.width;
+                var y = dt < db ? coveredRect.top : coveredRect.bottom - elementRect.height;
+
+                var gridRect = grid.getBoundingClientRect();
+                x = x - gridRect.left;
+                y = y - gridRect.top;
+
+
+
+                return {x: x, y: y};
+              },
+              project: function (element) {
+                var elementRect = element.getBoundingClientRect();
+                _cells.forEach(function (cell) {
+                  var cellRect = cell.getBoundingClientRect();
+                  isCellCovered(cellRect, elementRect) ? cell.classList.add('on') : cell.classList.remove('on');
+                });
+              }
+            }
+          }
+        };
+
+        GRIDLOCK.init();
+
+        var k = GRIDLOCK.create(grid, 30, 30);
+
+        var button = document.querySelector('button');
+        button.onclick = function () {
+          var item = document.createElement('div');
+          item.classList.add('grid-item');
+          var w = Math.ceil(Math.random()*4);
+          var h = Math.ceil(Math.random()*4);
+
+          w = 3;
+          h = 3;
+          item.style.width = w * 40 + 'px';
+          item.style.height = h * 40 + 'px';
+          grid.appendChild(item);
+          $(item).draggable({
+            drag: function (e, ui) {
+              var element = ui.helper[0];
+              k.project(element);
+            },
+            stop: function (e, ui) {
+              var element = ui.helper[0];
+              var position = k.evaluate(element);
+              k.reset();
+              element.style.left = position.x + 'px';
+              element.style.top = position.y + 'px';
+            }
+          });
+        };
+
+      })();
+    </script>
+  </body>
+</html>

@@ -10,7 +10,7 @@ html, body {
   padding: 0;
   position: fixed;
   z-index: 9999;
-  height: 150px;
+  height: 120px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -20,18 +20,21 @@ html, body {
   padding: 5px;
 }
 
+#sandbox-modes {
+  padding: 5px;
+}
+
 #component-toolbar {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  height: 100px;
+  height: 70px;
+  margin: 0;
+  margin-top: 10px;
+  padding: 0;
 }
 
 #component-toolbar li {
   display: inline-block;
-  width: 150px;
-  height: 100px;
+  width: 120px;
+  height: 100%;
   text-align: center;
   float: left;
 }
