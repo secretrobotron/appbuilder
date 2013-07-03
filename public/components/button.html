@@ -85,9 +85,12 @@
           readyCallback: function() {
             var thisElement = this;
 
+            var tmpHTML = thisElement.innerHTML || 'Button';
             this.innerHTML = template.innerHTML;
             
             var button = this.querySelector('button');
+            button.innerHTML = tmpHTML;
+
             var disabled = thisElement.classList.contains('disabled');
 
             function initAppbuilder (e) {

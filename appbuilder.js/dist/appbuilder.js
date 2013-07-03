@@ -2681,9 +2681,12 @@ define('events',[], function() {
   };
 
 });
-define('connections',[], function () {
+define('text!connection.html',[],function () { return '<appbuilder-connection data-appbuilder-connection></appbuilder-connection>';});
+
+define('connections',['ui-util', 'text!connection.html'], function (ui_util, connection_html) {
 
   var __active = true;
+  var __rootHTML;
 
   function Connection (outputEndpoint, outputType, inputEndpoint, inputType) {
     this.inputEndpoint = inputEndpoint;
@@ -2691,8 +2694,22 @@ define('connections',[], function () {
     this.inputType = inputType;
     this.outputType = outputType;
 
+    var element = this.element = __rootHTML.querySelector('*[data-appbuilder-connection]').cloneNode(true);
+    element.setAttribute('to', '#' + inputEndpoint._parent.name);
+    element.setAttribute('from', '#' + outputEndpoint._parent.name);
+    element.setAttribute('input', inputType);
+    element.setAttribute('output', outputType);
+
     this.send = function (data) {
       inputEndpoint.receive(inputType, data);
+    };
+
+    this.addToDOM = function () {
+      document.body.appendChild(this.element);
+    };
+
+    this.removeFromDOM = function () {
+      document.body.removeChild(this.element);
     };
   }
   
@@ -2763,6 +2780,9 @@ define('connections',[], function () {
   }
 
   return {
+    init: function () {
+      __rootHTML = ui_util.getDomFragmentFromString(connection_html);
+    },
     setActive: function (value) {
       __active = !!value;
     },
@@ -2819,6 +2839,7 @@ define('element',['graph-ui', 'events', 'connections'],
           type: outputType,
           connection: connection
         });
+        connection.addToDOM();
       };
 
       controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
@@ -2828,11 +2849,13 @@ define('element',['graph-ui', 'events', 'connections'],
           otherObject.connections.removeInputConnection(connection);
         }
         controller.events.dispatch('disconnect', otherObject);
+        connection.removeFromDOM();
       };
 
       controller.disconnectOutput = function (connection) {
         controller.connections.removeOutputConnection(connection);
         connection.inputEndpoint.removeInputConnection(connection);
+        connection.removeFromDOM();
       };
 
       var graphUIMouseController = graph_ui_module.addElement(element, {
@@ -3173,6 +3196,9 @@ define('appbuilder',['text!appbuilder.html', 'text!appbuilder.css',
         outputElement._appbuilder.connectOutput(outputType, inputElement._appbuilder, inputType);
       }
     }
+
+    // TODO: keep this element around to make it semantically meaningful in html
+    connectionElement.parentNode.removeChild(connectionElement);
   }
 
   function initPage () {
@@ -3191,8 +3217,11 @@ define('appbuilder',['text!appbuilder.html', 'text!appbuilder.css',
       setTimeout(function () {
         var connectionElements = Array.prototype.slice.call(document.querySelectorAll('appbuilder-connection')).concat(__connectionElementsForProcessing);
         connectionElements.forEach(processConnectionElement);
+
       }, 100);
     }, false);
+
+    connections_module.init();
 
     __ready = true;
     var customEvent = document.createEvent('CustomEvent');

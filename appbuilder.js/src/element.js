@@ -45,6 +45,7 @@ define(['graph-ui', 'events', 'connections'],
           type: outputType,
           connection: connection
         });
+        connection.addToDOM();
       };
 
       controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
@@ -54,11 +55,13 @@ define(['graph-ui', 'events', 'connections'],
           otherObject.connections.removeInputConnection(connection);
         }
         controller.events.dispatch('disconnect', otherObject);
+        connection.removeFromDOM();
       };
 
       controller.disconnectOutput = function (connection) {
         controller.connections.removeOutputConnection(connection);
         connection.inputEndpoint.removeInputConnection(connection);
+        connection.removeFromDOM();
       };
 
       var graphUIMouseController = graph_ui_module.addElement(element, {

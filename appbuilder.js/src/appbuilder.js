@@ -320,6 +320,9 @@ define(['text!appbuilder.html', 'text!appbuilder.css',
         outputElement._appbuilder.connectOutput(outputType, inputElement._appbuilder, inputType);
       }
     }
+
+    // TODO: keep this element around to make it semantically meaningful in html
+    connectionElement.parentNode.removeChild(connectionElement);
   }
 
   function initPage () {
@@ -338,8 +341,11 @@ define(['text!appbuilder.html', 'text!appbuilder.css',
       setTimeout(function () {
         var connectionElements = Array.prototype.slice.call(document.querySelectorAll('appbuilder-connection')).concat(__connectionElementsForProcessing);
         connectionElements.forEach(processConnectionElement);
+
       }, 100);
     }, false);
+
+    connections_module.init();
 
     __ready = true;
     var customEvent = document.createEvent('CustomEvent');

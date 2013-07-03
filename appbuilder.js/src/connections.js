@@ -1,6 +1,7 @@
-define([], function () {
+define(['ui-util', 'text!connection.html'], function (ui_util, connection_html) {
 
   var __active = true;
+  var __rootHTML;
 
   function Connection (outputEndpoint, outputType, inputEndpoint, inputType) {
     this.inputEndpoint = inputEndpoint;
@@ -8,8 +9,22 @@ define([], function () {
     this.inputType = inputType;
     this.outputType = outputType;
 
+    var element = this.element = __rootHTML.querySelector('*[data-appbuilder-connection]').cloneNode(true);
+    element.setAttribute('to', '#' + inputEndpoint._parent.name);
+    element.setAttribute('from', '#' + outputEndpoint._parent.name);
+    element.setAttribute('input', inputType);
+    element.setAttribute('output', outputType);
+
     this.send = function (data) {
       inputEndpoint.receive(inputType, data);
+    };
+
+    this.addToDOM = function () {
+      document.body.appendChild(this.element);
+    };
+
+    this.removeFromDOM = function () {
+      document.body.removeChild(this.element);
     };
   }
   
@@ -80,6 +95,9 @@ define([], function () {
   }
 
   return {
+    init: function () {
+      __rootHTML = ui_util.getDomFragmentFromString(connection_html);
+    },
     setActive: function (value) {
       __active = !!value;
     },
