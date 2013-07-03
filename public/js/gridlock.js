@@ -15,7 +15,7 @@
         '}\n' +
         '.GRIDLOCK .CELL {\n' +
         '  position: absolute;\n' +
-        '  border: 1px solid transparent;\n' +
+        '  border: 0;\n' +
         '  display: block;\n' +
         '  -webkit-user-select: none;\n' +
         '     -moz-user-select: none;\n' +
@@ -23,8 +23,15 @@
         '          user-select: none;\n' +
         '}\n' +
         '.GRIDLOCK .CELL.on {\n' +
-        '  border: 1px solid #fff;\n' +
-        '  background: rgba(200, 200, 255, 0.9);\n' +
+        '}\n' +
+        '.GRIDLOCK .CELL.on:before {\n' +
+        '  content: "";\n' +
+        '  position: absolute;\n' +
+        '  top: 1px;\n' +
+        '  left: 1px;\n' +
+        '  right: 1px;\n' +
+        '  bottom: 1px;\n' +
+        '  background: rgb(200, 200, 255);\n' +
         '}\n' +
         '';
       document.head.appendChild(styleSheet);
@@ -63,7 +70,7 @@
       }
 
       return {
-        reset: function () {
+        clear: function () {
           _cells.forEach(function (cell) {
             cell.classList.remove('on');
           });
@@ -92,8 +99,6 @@
           var gridRect = grid.getBoundingClientRect();
           x = x - gridRect.left;
           y = y - gridRect.top;
-
-
 
           return {x: x, y: y};
         },

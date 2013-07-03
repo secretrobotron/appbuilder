@@ -1,5 +1,7 @@
 define([], function () {
 
+  var __active = true;
+
   function Connection (outputEndpoint, outputType, inputEndpoint, inputType) {
     this.inputEndpoint = inputEndpoint;
     this.outputEndpoint = outputEndpoint;
@@ -62,11 +64,13 @@ define([], function () {
         }
       },
       send: function (type, data) {
-        var connections = _outputs[type];
-        if (connections) {
-          connections.forEach(function (c) {
-            c.send(data);
-          });
+        if (__active) {
+          var connections = _outputs[type];
+          if (connections) {
+            connections.forEach(function (c) {
+              c.send(data);
+            });
+          }
         }
       },
       receive: onReceive
@@ -76,6 +80,9 @@ define([], function () {
   }
 
   return {
+    setActive: function (value) {
+      __active = !!value;
+    },
     createEndpoint: createEndpoint,
     createConnection: function (outputEndpoint, outputType, inputEndpoint, inputType) {
       return new Connection(outputEndpoint, outputType, inputEndpoint, inputType);

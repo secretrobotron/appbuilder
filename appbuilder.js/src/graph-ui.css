@@ -21,5 +21,20 @@
   pointer-events: none;
   margin-top: -2.5px;
   margin-left: -2.5px;
-  border-radius: 5px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.webmaker-appbuilder-line:after {
+  right: -35px;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+  border-width: 15px;
+  top: 50%;
+  margin-top: -15px;
+  border-left-color: rgba(170, 220, 250, 0.8);
 }

@@ -37,7 +37,25 @@
     xhr.send();
   }
 
+  var __ffosComponents = {};
+
   window.appbuilder.environment = {
+    defineFFOSComponent: function (name, callback) {
+      __ffosComponents[name] = callback;
+    },
+    registerExistingFFOSComponents: function (elementCallback) {
+      Object.keys(__ffosComponents).forEach(function (componentName) {
+        var elements = document.querySelectorAll(componentName);
+        Array.prototype.forEach.call(elements, function (element) {
+          appbuilder.environment.initFFOSComponent(element);
+          elementCallback(element);
+        });
+      });
+    },
+    initFFOSComponent: function (element) {
+      var name = element.localName;
+      __ffosComponents[name] && __ffosComponents[name].call(element);
+    },
     getComponents: function (callback) {
       if (!callback) {
         throw 'callback required';

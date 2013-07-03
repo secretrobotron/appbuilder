@@ -1,0 +1,25 @@
+appbuilder-button {
+  display: inline-block;
+  width: 90px;
+  height: 30px;
+}
+
+appbuilder-button.disabled {
+  color: #ccc;
+}
+
+appbuilder-button.disabled button {
+  color: #ccc;
+}
+
+appbuilder-button button {
+  height: 100%;
+  width: 100%;
+}
+
+appbuilder-button[data-appbuilder-thumbnail] {
+  margin-top: -15px;
+  top: 50%;
+  left: 50%;
+  margin-left: -45px;
+}

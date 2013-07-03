@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <script src="/vendor/platform.min.js"></script>
+    <script src="/js/appbuilder.js"></script>
+    <script src="/vendor/jquery.min.js"></script>
+    <!-- jquery ui is purposely missing from this list. see sandbox.js -->
+    <script src="/js/gridlock.js"></script>
+    <script src="/js/environment.js"></script>
+    <script src="sandbox.js"></script>
+    <link rel="stylesheet" href="sandbox.css">
+  </head>
+  <body>
+    <div id="phone-container" class="no-user-select"></div>
+    <div id="sandbox-toolbar">
+      <ul id="component-toolbar" class="no-user-select">
+        <li class="component-toolbar-item"></li>
+      </ul>
+      <ul id="properties-toolbar">
+        <li class="properties-toolbar-item"></li>
+      </ul>
+      <div id="sandbox-modes" class="no-user-select">
+        <input id="layout-mode-radio" type="radio" value="layout" name="mode" checked>
+        <label for="layout-mode-radio"><small>Layout</small></label>
+        <input id="connect-mode-radio" type="radio" value="connect" name="mode">
+        <label for="connect-mode-radio"><small>Connect</small></label>
+        <input id="edit-mode-radio" type="radio" value="edit" name="mode">
+        <label for="edit-mode-radio"><small>Edit</small></label>
+        <input id="play-mode-radio" type="radio" value="play" name="mode">
+        <label for="play-mode-radio"><small>Play</small></label>
+      </div>
+    </div>
+  </body>
+</html>

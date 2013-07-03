@@ -1,5 +1,8 @@
-define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'events', 'connections'],
-  function (appbuilder_html, appbuilder_css, ui_util, graph_ui_module, events_module, connections_module) {
+define(['text!appbuilder.html', 'text!appbuilder.css',
+  'ui-util', 'graph-ui', 'events', 'connections', 'element'],
+  function (appbuilder_html, appbuilder_css,
+    ui_util, graph_ui_module,
+    events_module, connections_module, element_module) {
 
   var __registeredElements = [];
 
@@ -10,7 +13,10 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   var __connectionListElement;
   var __connectionListDetailElement;
   var __currentSentenceController;
+  var __currentConnectionListController;
   var __connectionElementsForProcessing = [];
+
+  var __ready = false;
 
   function showConnectionList (element, onAccept, onCancel) {
     var acceptButton = __connectionListElement.querySelector('button[data-action="accept"]');
@@ -25,6 +31,7 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
 
     var connectionList = [];
 
+    var connectionIndex = 0;
     Object.keys(connections).forEach(function (outputKey) {
       connections[outputKey].forEach(function (connection) {
         var inputString = connection.inputEndpoint._parent.definition.inputs[connection.inputType].description;
@@ -34,12 +41,18 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
         outputString = outputString.replace('{{name}}', 'the ' + connection.inputEndpoint._parent.name);
 
         var itemElement = __connectionListDetailElement.cloneNode(true);
-        itemElement.querySelector('*[data-description]').innerHTML = 'When ' + outputString + ', ' + inputString;
+        var descriptionElement = itemElement.querySelector('*[data-description]');
+        var inputElement = itemElement.querySelector('input[type="checkbox"]');
 
-        itemElement.querySelector('input[type="checkbox"]')._connection = connection;
+        inputElement.id = 'appbuilder-connection-list-item-' + connectionIndex;
+        descriptionElement.innerHTML = 'When ' + outputString + ', ' + inputString;
+        descriptionElement.setAttribute('for', 'appbuilder-connection-list-item-' + connectionIndex);
+
+        inputElement._connection = connection;
 
         connectionListElement.appendChild(itemElement);
         connectionList.push(connection);
+        ++connectionIndex;
       });
     });
 
@@ -49,12 +62,10 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
         }).map(function (input) {
           return input._connection;
         });
-      controller.clear();
       onAccept && onAccept(uncheckedListItems);
     }
 
     function onCancelButtonClick (e) {
-      controller.clear();
       onCancel && onCancel();
     }
 
@@ -115,12 +126,10 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     }
 
     function onAcceptButtonClick (e) {
-      controller.clear();
       onAccept && onAccept(outputSelectElement.value, inputSelectElement.value);
     }
 
     function onCancelButtonClick (e) {
-      controller.clear();
       onCancel && onCancel();
     }
 
@@ -152,12 +161,57 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
     return controller;
   }
 
+  // Note: this will only get called if `e.preventDefault()` is not issued by graph-ui's mousedown timeout.
+  function onElementClickInGraphMode (e) {
+    var element = e.currentTarget;
+    if (__currentConnectionListController) {
+      __currentConnectionListController.clear();
+    }
+    __currentConnectionListController = showConnectionList(element,
+      function (connectionsToDestroy) {
+        connectionsToDestroy.forEach(function (connection) {
+          element._appbuilder.disconnectOutput(connection);
+        });
+        __currentConnectionListController.clear();
+      },
+      function () {
+        __currentConnectionListController.clear();
+      });
+  }
+
   var appbuilder = window.appbuilder = window.appbuilder || {};
 
-  appbuilder.createElementOverlays = function () {
-      graph_ui_module.createOverlays();
+  var modeSwitchFunctions = {
+    inactive: function () {
+      appbuilder.disableGraphMouseEvents();
+      connections_module.setActive(false);
+    },
+    connect: function () {
+      appbuilder.enableGraphMouseEvents();
+      connections_module.setActive(false);
+    },
+    interactive: function () {
+      appbuilder.disableGraphMouseEvents();
+      connections_module.setActive(true);
+    }
   };
-    
+
+  appbuilder.switchMode = function (modeName) {
+    if (modeSwitchFunctions[modeName]) {
+      modeSwitchFunctions[modeName]();
+      __registeredElements.forEach(function (element) {
+        element._appbuilder.modes[modeName] && element._appbuilder.modes[modeName]();
+      });
+    }
+    else {
+      throw "No such appbuilder mode: " + modeName;
+    }
+  };
+
+  appbuilder.createElementOverlays = function () {
+    graph_ui_module.createOverlays();
+  };
+  
   appbuilder.updateStateListenersOnConnect = function (controller) {
     controller.events.on('connect', function (e) {
       Object.keys(controller.states).forEach(function (type) {
@@ -171,13 +225,33 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
   appbuilder.enableGraphMouseEvents = function () {
     __registeredElements.forEach(function (element) {
       element._appbuilder.enableGraphMouseEvents();
+      element.addEventListener('click', onElementClickInGraphMode, false);
     });
   };
 
   appbuilder.disableGraphMouseEvents = function () {
     __registeredElements.forEach(function (element) {
       element._appbuilder.disableGraphMouseEvents();
+      element.removeEventListener('click', onElementClickInGraphMode, false);
     });
+  };
+
+  appbuilder.forEachElement = function (fn) {
+    __registeredElements.forEach(fn);
+  };
+
+  appbuilder.ready = function (callback) {
+    if (__ready) {
+      setTimeout(function () {
+        callback();
+      }, 10);
+    }
+    else {
+      window.addEventListener('appbuilderloaded', function onAppBuilderLoaded(e) {
+        window.removeEventListener('appbuilderloaded', onAppBuilderLoaded, false);
+        callback();
+      }, false);
+    }
   };
 
   appbuilder.initElement = function (element, definition) {
@@ -186,131 +260,40 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
       throw "No definition found for element.";
     }
 
-    var controller = element._appbuilder = {};
-    controller.events = events_module.createEventManager();
-    controller.connections = connections_module.createEndpoint(controller, function (type, data) {
-      controller.events.dispatch('receive:' + type, data);
-    });
-
-    element.id = element.id || 'appbuilder-element-' + __registeredElements.length;
-    controller.name = element.name || element.getAttribute('name') || element.id || element.tagName;
-    controller.definition = definition;
-
-    controller.states = definition.states || {};
-
-    controller.onInput = function (type, handler) {
-      controller.events.on('receive:' + type, function (e) {
-        handler(e.data || e.detail);
-      });
-    };
-
-    controller.offInput = function (type, handler) {
-    };
-
-    controller.sendOutput = function (outputType, data) {
-      controller.connections.send(outputType, data);
-    };
-
-    controller.connectOutput = function (outputType, otherObject, inputType) {
-      var connection = connections_module.createConnection(controller.connections, outputType, otherObject.connections, inputType);
-      controller.connections.addOutputConnection(connection);
-      otherObject.connections.addInputConnection(connection);
-      controller.events.dispatch('connect', {
-        to: otherObject,
-        type: outputType,
-        connection: connection
-      });
-    };
-
-    controller.findAndDisconnectOutput = function (outputType, otherObject, inputType) {
-      var connection = controller.connections.getOutputConection(outputType, from, inputType);
-      if (connection) {
-        controller.removeOutputConnection(connection);
-        otherObject.connections.removeInputConnection(connection);
-      }
-      controller.events.dispatch('disconnect', otherObject);
-    };
-
-    controller.disconnectOutput = function (connection) {
-      controller.connections.removeOutputConnection(connection);
-      connection.inputEndpoint.removeInputConnection(connection);
-    };
-
-    controller.enableGraphMouseEvents = function () {
-      element.addEventListener('mousedown', onMouseDown, false);
-    };
-
-    controller.disableGraphMouseEvents = function () {
-      element.removeEventListener('mousedown', onMouseDown, false);
-    };
-
-    graph_ui_module.addElement(element);
-
-    function onMouseDown (e) {
-      if (e.which !== 1) { return; }
-      e.stopPropagation();
-      e.preventDefault();
-
-      var timeout = -1;
-      var mouseX = e.clientX, mouseY = e.clientY;
-
-      function onMouseUpBeforeTimeout (e) {
-        window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
-        element.addEventListener('mousedown', onMouseDown, false);
-        clearTimeout(timeout);
-      }
-
-      function onMouseUpAfterTimeout (e) {
-        window.removeEventListener('mouseup', onMouseUpAfterTimeout, false);
-        element.addEventListener('mousedown', onMouseDown, false);
-        var connectionElement = graph_ui_module.stopDrawingPath();
-        graph_ui_module.destroyOverlays();
-        if (connectionElement) {
-          if (connectionElement !== element) {
-            openConnectionSentencePanel(element, connectionElement,
-              function (outputType, inputType) {
-                element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
-                graph_ui_module.destroyOverlays();
-              },
-              function () {
-                graph_ui_module.destroyOverlays();
-              });
-          }
-          else {
-            showConnectionList(element, function (connectionsToDestroy) {
-              connectionsToDestroy.forEach(function (connection) {
-                controller.disconnectOutput(connection);
-              });
-            });
-          }
+    element._appbuilder = element_module.create(element, definition, {
+      onConnectionRequest: function (connectionElement) {
+        if (__currentSentenceController) {
+          __currentSentenceController.clear();
         }
+        __currentSentenceController = openConnectionSentencePanel(element, connectionElement,
+          function (outputType, inputType) {
+            element._appbuilder.connectOutput(outputType, connectionElement._appbuilder, inputType);
+            graph_ui_module.destroyOverlays();
+            __currentSentenceController.clear();
+            __currentSentenceController = null;
+          },
+          function () {
+            graph_ui_module.destroyOverlays();
+            __currentSentenceController.clear();
+            __currentSentenceController = null;
+          });
       }
-
-      timeout = setTimeout(function () {
-        window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
-        window.addEventListener('mouseup', onMouseUpAfterTimeout, false);
-        graph_ui_module.createOverlays();
-        graph_ui_module.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
-        timeout = -1;
-      }, 500);
-
-      window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
-      element.removeEventListener('mousedown', onMouseDown, false);
-    }
+    });
 
     __registeredElements.push(element);
 
-    if (controller.definition.connectionElements &&
-        controller.definition.connectionElements.length &&
-        typeof controller.definition.connectionElements !== 'string') {
-      Array.prototype.slice.call(controller.definition.connectionElements).forEach(function (connectionElement) {
+    if (definition.connectionElements &&
+        definition.connectionElements.length &&
+        typeof definition.connectionElements !== 'string') {
+      Array.prototype.slice.call(definition.connectionElements).forEach(function (connectionElement) {
         var querySelector = element.id ? '#' + element.id : (element.name ? element.tagName + '[name="' + element.name + '"]' : '');
         connectionElement.setAttribute('from', querySelector);
         __connectionElementsForProcessing.push(connectionElement);
       });
     }
 
-    return controller;
+    return element._appbuilder;
+
   };
 
   function processConnectionElement (connectionElement) {
@@ -358,6 +341,7 @@ define(['text!appbuilder.html', 'text!appbuilder.css', 'ui-util', 'graph-ui', 'e
       }, 100);
     }, false);
 
+    __ready = true;
     var customEvent = document.createEvent('CustomEvent');
     customEvent.initCustomEvent('appbuilderloaded', false, false, appbuilder);
     window.dispatchEvent(customEvent);

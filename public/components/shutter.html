@@ -53,10 +53,12 @@
         width: 100%;
         height: 100%;
       }
-      appbuilder-shutter div[data-shutter-image-container] img {
+      appbuilder-shutter div[data-shutter-image-container] img,
+      appbuilder-shutter div[data-shutter-image-container] canvas,
+      appbuilder-shutter div[data-shutter-image-container] video {
         width: 100%;
       }
-      appbuilder-shutter[data-thumbnail-only] {
+      appbuilder-shutter[data-appbuilder-thumbnail] {
         height: 100%;
         width: 100%;
       }
@@ -95,8 +97,6 @@
 
             var thisElement = this;
 
-            var demoMode = !!thisElement.getAttribute('data-thumbnail-only');
-
             var videoElement = thisElement.querySelector('video');
             var imageContainerElement = thisElement.querySelector('div[data-shutter-image-container]');
 
@@ -106,22 +106,6 @@
               var demoImage = new Image();
               demoImage.src = 'http://upload.wikimedia.org/wikipedia/commons/d/d1/Camera_font_awesome.svg';              
             }
-
-            __getUserMedia.call(navigator, {video: true, audio: false},
-              function (stream) {
-                if (navigator.mozGetUserMedia) {
-                  videoElement.mozSrcObject = stream;
-                } else {
-                  var vendorURL = window.URL || window.webkitURL;
-                  videoElement.src = vendorURL.createObjectURL(stream);
-                }
-                emptyImageContainer();
-                videoElement.hidden = false;
-                videoElement.play();
-              },
-              function (err) {
-                console.err('Couldn\'t prepare camera.');
-              });
 
             function initAppbuilder (e) {
               var appbuilderController = appbuilder.initElement(thisElement, {
@@ -152,8 +136,32 @@
                     description: '{{name}} takes a picture'
                   }
                 },
-                connectionElements: connectionElements
+                connectionElements: connectionElements,
+                modes: {
+                  layout: function () {
+
+                  },
+                  interactive: function () {
+
+                  }
+                }
               });
+
+              __getUserMedia.call(navigator, {video: true, audio: false},
+                function (stream) {
+                  if (navigator.mozGetUserMedia) {
+                    videoElement.mozSrcObject = stream;
+                  } else {
+                    var vendorURL = window.URL || window.webkitURL;
+                    videoElement.src = vendorURL.createObjectURL(stream);
+                  }
+                  emptyImageContainer();
+                  videoElement.hidden = false;
+                  videoElement.play();
+                },
+                function (err) {
+                  console.err('Couldn\'t prepare camera.');
+                });
 
               videoElement.addEventListener('canplay', function (e) {
                 appbuilderController.states.isReady = true;
@@ -186,10 +194,7 @@
               });
             }
 
-            if (demoMode) {
-
-            }
-            else {
+            if (!thisElement.getAttribute('data-appbuilder-thumbnail')) {
               if (!window.appbuilder) {
                 window.addEventListener('appbuilderloaded', initAppbuilder, false);
               }

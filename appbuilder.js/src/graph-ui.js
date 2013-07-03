@@ -87,9 +87,59 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
     return overlay;
   }
 
-  return {
-    addElement: function (element) {
+  var graph_ui = {
+    addElement: function (element, options) {
+      options = options || {};
+      options.onConnectionRequest = options.onConnectionRequest || function () {};
+
       __graphElements.push(element);
+
+      function onMouseDown (mouseDownEvent) {
+        if (mouseDownEvent.which !== 1) {
+          return true;
+        }
+
+        var timeout = -1;
+        var mouseX = mouseDownEvent.clientX, mouseY = mouseDownEvent.clientY;
+
+        function onMouseUpBeforeTimeout (e) {
+          window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
+          element.addEventListener('mousedown', onMouseDown, false);
+          clearTimeout(timeout);
+        }
+
+        function onMouseUpAfterTimeout (e) {
+          window.removeEventListener('mouseup', onMouseUpAfterTimeout, false);
+          element.addEventListener('mousedown', onMouseDown, false);
+          var connectionElement = graph_ui.stopDrawingPath();
+          graph_ui.destroyOverlays();
+          if (connectionElement) {
+            options.onConnectionRequest(connectionElement);
+          }
+        }
+
+        timeout = setTimeout(function () {
+          window.removeEventListener('mouseup', onMouseUpBeforeTimeout, false);
+          window.addEventListener('mouseup', onMouseUpAfterTimeout, false);
+          graph_ui.createOverlays();
+          graph_ui.startDrawingPath(mouseX + document.body.scrollLeft, mouseY + document.body.scrollTop);
+          timeout = -1;
+          mouseDownEvent.preventDefault();
+          mouseDownEvent.stopPropagation();
+        }, 500);
+
+        window.addEventListener('mouseup', onMouseUpBeforeTimeout, false);
+        element.removeEventListener('mousedown', onMouseDown, false);
+      }
+
+      return {
+        enable: function () {
+          element.addEventListener('mousedown', onMouseDown, false);
+        },
+        disable: function () {
+          element.removeEventListener('mousedown', onMouseDown, false);
+        }
+      };
     },
     removeElement: function (element) {
       var idx = __graphElements.indexOf(element);
@@ -151,5 +201,7 @@ define(['text!graph-ui.css', 'text!graph-ui.html', 'ui-util'], function (graph_u
       return tmpConnectionElement;
     }
   };
+
+  return graph_ui;
 
 });
