@@ -85,13 +85,19 @@
           readyCallback: function() {
             var thisElement = this;
 
-            var tmpHTML = thisElement.innerHTML || 'Button';
+            var isThumbnail = !!thisElement.getAttribute('data-appbuilder-thumbnail');
+
+            var tmpHTML = isThumbnail ? 'Button' : (thisElement.innerHTML || 'Button');
             this.innerHTML = template.innerHTML;
             
             var button = this.querySelector('button');
             button.innerHTML = tmpHTML;
 
             var disabled = thisElement.classList.contains('disabled');
+
+            function onClickBlocker (e) {
+              e.preventDefault();
+            }
 
             function initAppbuilder (e) {
               window.removeEventListener('appbuilderloaded', initAppbuilder, false);
@@ -118,10 +124,10 @@
                 },
                 modes: {
                   layout: function () {
-
+                    button.addEventListener('click', onClickBlocker, false);
                   },
                   interactive: function () {
-
+                    button.removeEventListener('click', onClickBlocker, false);
                   }
                 },
                 edit: function (doneCallback) {

@@ -165,6 +165,7 @@
 
           // Get rid of demo mode within webcomponent.
           // Helper is thrown away here, so its state doesn't matter anymore.
+          // Since it's cloned, give it the properties of the new elements.
           ui.helper[0].removeAttribute('data-appbuilder-thumbnail');
           ui.helper[0].id = ui.helper[0].localName + __GID++;
           ui.helper[0].innerHTML = '';
