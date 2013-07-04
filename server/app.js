@@ -10,14 +10,15 @@ var env = new habitat();
 
 var routes = require('./routes');
 
-app.use(express.static(path.join(__dirname, '../public')));
+app.get('/components.json',
+  routes.list.components('/components',
+    path.join(__dirname, '../sandbox/components')));
+
+app.use(express.static(path.join(__dirname, '../sandbox')));
+
 app.use(function (err, req, res, next) {
   res.send(404, err);
 });
-
-app.get('/api/list/components',
-  routes.list.components('/components',
-    path.join(__dirname, '../public/components')));
 
 app.use(express.logger("dev"));
 

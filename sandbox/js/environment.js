@@ -4,10 +4,10 @@
   var scripts = document.getElementsByTagName('script');
   var thisScriptTag = scripts[scripts.length - 1];
 
-  var __componentsUrl = ''; // /api/list/components
+  var __componentsUrl = 'components.json';
 
-  if (thisScriptTag.hasAttribute('components-url')) {
-    __componentsUrl = thisScriptTag.getAttribute('components-url');
+  if (thisScriptTag.hasAttribute('data-components-url')) {
+    __componentsUrl = thisScriptTag.getAttribute('data-components-url');
   }
 
   function createXHR (url, callback, method) {
