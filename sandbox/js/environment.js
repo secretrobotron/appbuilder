@@ -78,6 +78,7 @@
         };
         var componentsScript = document.createElement('script');
         componentsScript.src = __componentsUrl;
+        componentsScript.type = 'text/javascript';
         document.head.appendChild(componentsScript);
       }
       else {
