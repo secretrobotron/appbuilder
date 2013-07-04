@@ -1,6 +1,15 @@
 (function () {
   window.appbuilder = window.appbuilder || {};
 
+  var scripts = document.getElementsByTagName('script');
+  var thisScriptTag = scripts[scripts.length - 1];
+
+  var __componentsUrl = ''; // /api/list/components
+
+  if (thisScriptTag.hasAttribute('components-url')) {
+    __componentsUrl = thisScriptTag.getAttribute('components-url');
+  }
+
   function createXHR (url, callback, method) {
     if (!callback) {
       throw 'callback required';
@@ -61,7 +70,7 @@
         throw 'callback required';
       }
 
-      createXHR('/api/list/components', function (err, data) {
+      createXHR(__componentsUrl, function (err, data) {
         if (!err) {
           try {
             var list = JSON.parse(data);

@@ -234,7 +234,7 @@
 
     // NEED this hack because jquery ruins platform somehow.
     var s = document.createElement('script');
-    s.src = '/vendor/jquery-ui-1.10.3.custom.js';
+    s.src = 'vendor/jquery-ui-1.10.3.custom.js';
     s.onload = function () {
       // stop jqueryui from complaining about not being initialized yet
       setTimeout(function () {
