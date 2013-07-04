@@ -10,6 +10,14 @@ var env = new habitat();
 
 var routes = require('./routes');
 
+// lovingly borrowed from http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
+var allowCrossDomain = function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}
+
 app.get('/components.json',
   routes.list.components('/components',
     path.join(__dirname, '../sandbox/components')));
@@ -21,6 +29,8 @@ app.use(function (err, req, res, next) {
 });
 
 app.use(express.logger("dev"));
+
+app.use(allowCrossDomain);
 
 app.listen(env.get("PORT"), function(){
   console.log('Express server listening on ' + os.hostname());
