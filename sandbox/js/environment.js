@@ -5,6 +5,7 @@
   var thisScriptTag = scripts[scripts.length - 1];
 
   var __componentsUrl = 'components.json';
+  var __useJSONPForComponents = thisScriptTag.hasAttribute('data-components-jsonp');
 
   if (thisScriptTag.hasAttribute('data-components-url')) {
     __componentsUrl = thisScriptTag.getAttribute('data-components-url');
@@ -70,24 +71,35 @@
         throw 'callback required';
       }
 
-      createXHR(__componentsUrl, function (err, data) {
-        if (!err) {
-          try {
-            var list = JSON.parse(data);
-            setTimeout(function() {
-              callback(list);
-            }, 0);
+      if (__useJSONPForComponents) {
+        window.__componentsListCallback__ = function (data) {
+          document.head.removeChild(componentsScript);  
+          callback(data);
+        };
+        var componentsScript = document.createElement('script');
+        componentsScript.src = __componentsUrl;
+        document.head.appendChild(componentsScript);
+      }
+      else {
+        createXHR(__componentsUrl, function (err, data) {
+          if (!err) {
+            try {
+              var list = JSON.parse(data);
+              setTimeout(function() {
+                callback(list);
+              }, 0);
+            }
+            catch (e) {
+              console.error('Failed to parse component list: ', e);
+              callback(null);
+            }
           }
-          catch (e) {
-            console.error('Failed to parse component list: ', e);
+          else {
+            console.error('Failed to retrieve list of components: ', e);
             callback(null);
           }
-        }
-        else {
-          console.error('Failed to retrieve list of components: ', e);
-          callback(null);
-        }
-      });
+        });
+      }
     }
   };
 })();

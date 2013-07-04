@@ -1,4 +1,4 @@
-[
+__componentsListCallback__([
   {
     "name": "appbuilder-button",
     "description": "A simple button.",
@@ -64,4 +64,4 @@
     },
     "url": "components/shutter.html"
   }
-]
+])
