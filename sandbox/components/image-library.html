@@ -106,7 +106,7 @@
               _appbuilder.onInput('createGif', function () {
                 var gif = new GIF({
                   workers: 2,
-                  workerScript: 'lib/gif.worker.js',
+                  workerScript: window.location.protocol + '//' + window.location.host + '//' + 'sandbox/lib/gif.worker.js',
                   quality: 10
                 });
 
