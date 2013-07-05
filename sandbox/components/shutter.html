@@ -2,33 +2,6 @@
   {
     "name": "appbuilder-shutter",
     "description": "A shutter for use with WebRTC-ready cameras.",
-    "states": {
-      "isReady": false
-    },
-    "inputs": {
-      "takePicture": {
-        "type": "event",
-        "description": "take a picture"
-      },
-      "showImage": {
-        "type": "image",
-        "description": "display the image"
-      },
-      "clearImage": {
-        "type": "image",
-        "description": "clear the image if one is being displayed"
-      }
-    },
-    "outputs": {
-      "isReady": {
-        "type": "event",
-        "description": "{{name}} is ready"
-      },
-      "pictureTaken": {
-        "type": "image",
-        "description": "{{name}} takes a picture"
-      }
-    },
     "dimensions": {
       "width": 250,
       "height": 200

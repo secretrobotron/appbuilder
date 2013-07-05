@@ -46,6 +46,7 @@ module.exports = function (componentsBaseUrl, componentsDir) {
   });
 
   return function (req, res) {
+    console.log(list);
     res.json(list, 200);
   };
 };
