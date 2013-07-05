@@ -205,6 +205,10 @@
           if (appbuilder.environment.noWebComponents) {
             appbuilder.environment.initFFOSComponent(newElement);
           }
+          window.top.postMessage({
+            newElement: '<' + newElement.localName + '>' + '</' + newElement.localName + '>',
+            parentElement: '#phone-container'
+          }, '*');
         }
         gridlock.clear();
       }

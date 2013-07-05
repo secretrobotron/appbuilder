@@ -18,6 +18,8 @@ var allowCrossDomain = function(req, res, next) {
   next();
 }
 
+app.use(allowCrossDomain);
+
 app.get('/components.json',
   routes.list.components('/components',
     path.join(__dirname, '../sandbox/components')));
@@ -29,8 +31,6 @@ app.use(function (err, req, res, next) {
 });
 
 app.use(express.logger("dev"));
-
-app.use(allowCrossDomain);
 
 app.listen(env.get("PORT"), function(){
   console.log('Express server listening on ' + os.hostname());
