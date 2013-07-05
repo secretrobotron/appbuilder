@@ -8,7 +8,7 @@
     }
   }
 </script>
-<script src="../../appbuilder.js/test/gif-maker/lib/gif.js"></script>
+<script src="../lib/gif.js"></script>
 <element name="appbuilder-image-library">
   <template>
     <style scoped>
@@ -106,7 +106,7 @@
               _appbuilder.onInput('createGif', function () {
                 var gif = new GIF({
                   workers: 2,
-                  workerScript: '../../appbuilder.js/test/gif-maker/lib/gif.worker.js',
+                  workerScript: '../lib/gif.worker.js',
                   quality: 10
                 });
 
