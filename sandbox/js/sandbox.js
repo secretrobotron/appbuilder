@@ -228,6 +228,10 @@
     else {
       window.addEventListener('appbuilderloaded', onAppbuilderLoaded, false);
     }
+
+    var customEvent = document.createEvent('CustomEvent');
+    customEvent.initCustomEvent('sandboxready', false, false, null);
+    window.dispatchEvent(customEvent);
   }
 
   document.addEventListener('readystatechange', function (e) {
