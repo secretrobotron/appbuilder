@@ -32,7 +32,35 @@
     </div>
     <script>
       (function () {
+        function readCompressedAppData (data) {
+          var bytes = atob(data);
+          console.log(bytes);
+          var jsonString = saw.lzw.decode(bytes);
+          console.log(jsonString);
+        }
+
         window.addEventListener('sandboxready', function (e) {
+          var o = {
+            a: {
+              a: 'secretrobotron',
+              n: 'Test App'
+            },
+            c: [
+              {t: 'VP7h9UvpZM', p:[0,0], id:0, name:'shutter'},
+              {t: 'eP56ECvglf', p:[0,300], id:3, name:'library'},
+              {t: 'PPqlqmxpZf', p:[0,100], id:1, name:'button1'},
+              {t: 'PPqlqmxpZf', p:[0,200], id:2, name:'button2'}
+            ],
+            x: [
+              {f:1, t:0, i:'click', o:'takePicture'},
+              {f:0, t:0, i:'pictureTaken', o:'showImage'}
+            ]
+          };
+          var s = JSON.stringify(o);
+          // var c = saw.lzw.encode(s);
+          // var u = btoa(c);
+
+          // readCompressedAppData(u);
 
         }, false);
       })();
